@@ -1,7 +1,7 @@
-import React from 'react';
-import { Link } from '@inertiajs/react';
 import { cn } from '@/lib/utils';
-import { Home, Brain, Compass } from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { Brain, Compass, Home, Video, Music } from 'lucide-react';
+import React from 'react';
 
 interface BottomNavItemProps {
     href: string;
@@ -15,8 +15,8 @@ function BottomNavItem({ href, icon, label, isActive }: BottomNavItemProps) {
         <Link
             href={href}
             className={cn(
-                "flex flex-1 flex-col items-center gap-1 p-2 transition-colors hover:text-primary",
-                isActive ? "text-primary" : "text-muted-foreground"
+                'hover:text-primary flex flex-1 flex-col items-center gap-1 p-2 transition-colors',
+                isActive ? 'text-primary' : 'text-muted-foreground',
             )}
         >
             {icon}
@@ -38,24 +38,20 @@ export function BottomNav({ currentPath }: BottomNavProps) {
         },
         {
             href: '/meditate',
-            icon: <Brain className="h-5 w-5" />,
+            icon: <Video className="h-5 w-5" />,
             label: 'Meditate',
         },
         {
             href: '/focus',
-            icon: <Compass className="h-5 w-5" />,
+            icon: <Music className="h-5 w-5" />,
             label: 'Focus',
         },
     ];
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
+        <nav className="bg-background/95 supports-[backdrop-filter]:bg-background/60 fixed right-0 bottom-0 left-0 z-50 flex h-16 items-center justify-around border-t backdrop-blur md:hidden">
             {navItems.map((item) => (
-                <BottomNavItem
-                    key={item.href}
-                    {...item}
-                    isActive={currentPath === item.href}
-                />
+                <BottomNavItem key={item.href} {...item} isActive={currentPath === item.href} />
             ))}
         </nav>
     );

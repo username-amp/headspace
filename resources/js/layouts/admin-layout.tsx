@@ -1,71 +1,78 @@
-import React from 'react';
-import { Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
-import { 
-  LayoutDashboard, 
-  Users, 
-  BookOpen, 
-  Music, 
-  BarChart 
-} from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { BarChart, Video, Music, LayoutDashboard, Users } from 'lucide-react';
+import React from 'react';
+import { Toaster } from 'sonner';
+import { useTheme } from '@/components/theme-provider';
 
 interface AdminLayoutProps {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Sidebar */}
-      <aside className="fixed left-0 top-0 w-64 h-full bg-card border-r">
-        <div className="p-4">
-          <h1 className="text-xl font-bold mb-6">Headspace Admin</h1>
-          
-          <nav className="space-y-2">
-            <Link href={route('admin.dashboard')}>
-              <Button variant="ghost" className="w-full justify-start">
-                <LayoutDashboard className="mr-2 h-4 w-4" />
-                Dashboard
-              </Button>
-            </Link>
-            
-            <Link href={route('admin.users.index')}>
-              <Button variant="ghost" className="w-full justify-start">
-                <Users className="mr-2 h-4 w-4" />
-                Users
-              </Button>
-            </Link>
-            
-            <Link href={route('admin.meditations.index')}>
-              <Button variant="ghost" className="w-full justify-start">
-                <BookOpen className="mr-2 h-4 w-4" />
-                Meditations
-              </Button>
-            </Link>
-            
-            <Link href={route('admin.focus.index')}>
-              <Button variant="ghost" className="w-full justify-start">
-                <Music className="mr-2 h-4 w-4" />
-                Focus
-              </Button>
-            </Link>
-            
-            <Link href={route('admin.analytics')}>
-              <Button variant="ghost" className="w-full justify-start">
-                <BarChart className="mr-2 h-4 w-4" />
-                Analytics
-              </Button>
-            </Link>
-          </nav>
-        </div>
-      </aside>
+    const { theme } = useTheme();
+    const currentTheme = theme === 'system'
+        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        : theme;
 
-      {/* Main Content */}
-      <main className="ml-64 min-h-screen">
-        {children}
-      </main>
-    </div>
-  );
+    const navItems = [
+        {
+            href: route('admin.dashboard'),
+            icon: <LayoutDashboard className="mr-2 h-4 w-4" />,
+            label: 'Dashboard',
+        },
+        {
+            href: route('admin.users.index'),
+            icon: <Users className="mr-2 h-4 w-4" />,
+            label: 'Users',
+        },
+        {
+            href: route('admin.meditations.index'),
+            icon: <Video className="mr-2 h-4 w-4" />,
+            label: 'Meditation Videos',
+        },
+        {
+            href: route('admin.focus.index'),
+            icon: <Music className="mr-2 h-4 w-4" />,
+            label: 'Focus Audio',
+        },
+        {
+            href: route('admin.analytics'),
+            icon: <BarChart className="mr-2 h-4 w-4" />,
+            label: 'Analytics',
+        },
+    ];
+
+    return (
+        <div className="min-h-screen bg-background text-foreground">
+            {/* Sidebar */}
+            <aside className="fixed left-0 top-0 h-full w-64 border-r bg-card">
+                <div className="p-4">
+                    <h1 className="mb-6 text-xl font-bold">Headspace Admin</h1>
+
+                    <nav className="space-y-2">
+                        {navItems.map((item) => (
+                            <Link key={item.label} href={item.href}>
+                                <Button variant="ghost" className="w-full justify-start">
+                                    {item.icon}
+                                    {item.label}
+                                </Button>
+                            </Link>
+                        ))}
+                    </nav>
+                </div>
+            </aside>
+
+            {/* Main Content */}
+            <main className="ml-64 min-h-screen flex-1 overflow-y-auto">
+                {children}
+            </main>
+            <Toaster 
+                position="top-right" 
+                theme={currentTheme}
+            />
+        </div>
+    );
 };
 
 export default AdminLayout;

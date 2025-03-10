@@ -4,18 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class FocusSession extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'title',
         'type',
+        'section',
+        'category',
         'duration',
         'description',
         'image_url',
         'audio_url',
-        'category',
-        'is_featured',  
+        'is_featured',
     ];
 
     protected $casts = [
@@ -35,5 +40,20 @@ class FocusSession extends Model
     public function userProgress(): HasMany
     {
         return $this->hasMany(UserProgress::class);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        // When force deleting, clean up files
+        static::forceDeleted(function ($focusSession) {
+            if ($focusSession->image_url) {
+                Storage::delete(str_replace('/storage/', 'public/', $focusSession->image_url));
+            }
+            if ($focusSession->audio_url) {
+                Storage::delete(str_replace('/storage/', 'public/', $focusSession->audio_url));
+            }
+        });
     }
 }

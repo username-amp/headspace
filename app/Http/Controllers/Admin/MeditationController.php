@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\MeditationSession;
+use App\Models\UserProgress;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -12,24 +14,24 @@ class MeditationController extends Controller
 {
     public function index()
     {
-        $meditations = MeditationSession::orderBy('created_at', 'desc')
-            ->withCount(['userMeditations'])
+        $meditationSessions = MeditationSession::orderBy('created_at', 'desc')
+            ->withCount(['userProgress', 'userMeditations'])
             ->paginate(10);
 
-            return Inertia::render('admin/meditations/index', [
-                'meditations' => $meditations,
-            ]);
+        return Inertia::render('admin/meditations/index', [
+            'meditationSessions' => $meditationSessions,
+        ]);
     }
 
     public function create()
     {
         $sections = [
-            'featured' => 'Featured Meditations',
-            'today' => 'Today\'s Meditation',
+            'featured' => 'Featured',
+            'today' => "Today's Meditation",
             'new_popular' => 'New and Popular',
             'quick' => 'Quick Meditations',
             'courses' => 'Courses',
-            'singles' => 'Singles'
+            'singles' => 'Singles',
         ];
 
         return Inertia::render('admin/meditations/create', [
@@ -46,11 +48,11 @@ class MeditationController extends Controller
             'duration' => 'required|string',
             'description' => 'required|string',
             'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-            'audio' => 'required|mimes:mp3,wav|max:20480',
+            'video' => 'required|mimes:mp4,mov,avi|max:102400', // 100MB max
         ]);
 
         $imagePath = $request->file('image')->store('meditation-images', 'public');
-        $audioPath = $request->file('audio')->store('meditation-audio', 'public');
+        $videoPath = $request->file('video')->store('meditation-videos', 'public');
 
         MeditationSession::create([
             'title' => $validated['title'],
@@ -59,24 +61,23 @@ class MeditationController extends Controller
             'duration' => $validated['duration'],
             'description' => $validated['description'],
             'image_url' => Storage::url($imagePath),
-            'audio_url' => Storage::url($audioPath),
+            'video_url' => Storage::url($videoPath),
             'is_featured' => $request->has('is_featured'),
         ]);
 
-        return Inertia::render('admin/meditations/index', [
-            'meditations' => $meditation->refresh()->withCount(['userMeditations'])->paginate(10),
-        ]);
+        return redirect()->route('admin.meditations.index')
+            ->with('success', 'Meditation session created successfully.');
     }
 
     public function edit(MeditationSession $meditation)
     {
         $sections = [
-            'featured' => 'Featured Meditations',
-            'today' => 'Today\'s Meditation',
+            'featured' => 'Featured',
+            'today' => "Today's Meditation",
             'new_popular' => 'New and Popular',
             'quick' => 'Quick Meditations',
             'courses' => 'Courses',
-            'singles' => 'Singles'
+            'singles' => 'Singles',
         ];
 
         return Inertia::render('admin/meditations/edit', [
@@ -94,7 +95,7 @@ class MeditationController extends Controller
             'duration' => 'required|string',
             'description' => 'required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'audio' => 'nullable|mimes:mp3,wav|max:20480',
+            'video' => 'nullable|mimes:mp4,mov,avi|max:102400', // 100MB max
         ]);
 
         if ($request->hasFile('image')) {
@@ -103,10 +104,10 @@ class MeditationController extends Controller
             $validated['image_url'] = Storage::url($imagePath);
         }
 
-        if ($request->hasFile('audio')) {
-            Storage::delete(str_replace('/storage/', 'public/', $meditation->audio_url));
-            $audioPath = $request->file('audio')->store('meditation-audio', 'public');
-            $validated['audio_url'] = Storage::url($audioPath);
+        if ($request->hasFile('video')) {
+            Storage::delete(str_replace('/storage/', 'public/', $meditation->video_url));
+            $videoPath = $request->file('video')->store('meditation-videos', 'public');
+            $validated['video_url'] = Storage::url($videoPath);
         }
 
         $meditation->update([
@@ -116,23 +117,60 @@ class MeditationController extends Controller
             'duration' => $validated['duration'],
             'description' => $validated['description'],
             'image_url' => $validated['image_url'] ?? $meditation->image_url,
-            'audio_url' => $validated['audio_url'] ?? $meditation->audio_url,
+            'video_url' => $validated['video_url'] ?? $meditation->video_url,
             'is_featured' => $request->has('is_featured'),
         ]);
 
-        return Inertia::render('admin/meditations/index', [
-            'meditations' => $meditation->refresh()->withCount(['userMeditations'])->paginate(10),
-        ]);
+        return redirect()->route('admin.meditations.index')
+            ->with('success', 'Meditation session updated successfully.');
     }
 
     public function destroy(MeditationSession $meditation)
     {
-        Storage::delete(str_replace('/storage/', 'public/', $meditation->image_url));
-        Storage::delete(str_replace('/storage/', 'public/', $meditation->audio_url));
-        $meditation->delete();
+        try {
+            DB::beginTransaction();
 
-        return Inertia::render('admin/meditations/index', [
-            'meditations' => $meditation->refresh()->withCount(['userMeditations'])->paginate(10),
-        ]);
+            // Delete the meditation session (this will trigger the soft delete)
+            $meditation->delete();
+
+            DB::commit();
+
+            return redirect()->route('admin.meditations.index')
+                ->with('success', 'Meditation session deleted successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('admin.meditations.index')
+                ->with('error', 'Failed to delete meditation session: ' . $e->getMessage());
+        }
+    }
+
+    public function forceDelete(MeditationSession $meditation)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Delete associated user progress
+            UserProgress::where('meditation_session_id', $meditation->id)->delete();
+
+            // Delete the files
+            if ($meditation->image_url) {
+                Storage::delete(str_replace('/storage/', 'public/', $meditation->image_url));
+            }
+            if ($meditation->video_url) {
+                Storage::delete(str_replace('/storage/', 'public/', $meditation->video_url));
+            }
+
+            // Force delete the meditation session
+            $meditation->forceDelete();
+
+            DB::commit();
+
+            return redirect()->route('admin.meditations.index')
+                ->with('success', 'Meditation session permanently deleted.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('admin.meditations.index')
+                ->with('error', 'Failed to permanently delete meditation session: ' . $e->getMessage());
+        }
     }
 }

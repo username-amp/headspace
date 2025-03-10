@@ -2,16 +2,43 @@
 
 namespace Database\Seeders;
 
-use App\Models\MeditationSession;
-use App\Models\FocusSession;
 use App\Models\Course;
 use App\Models\CourseLesson;
+use App\Models\FocusSession;
+use App\Models\MeditationSession;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
 
 class ContentSeeder extends Seeder
 {
     public function run(): void
     {
+        // Create placeholder files
+        $meditationImagePath = 'public/meditation-images/placeholder.jpg';
+        $meditationVideoPath = 'public/meditation-videos/placeholder.mp4';
+        $focusImagePath = 'public/focus-images/placeholder.jpg';
+        $focusAudioPath = 'public/focus-audio/placeholder.mp3';
+
+        // Ensure storage directories exist
+        Storage::makeDirectory('public/meditation-images');
+        Storage::makeDirectory('public/meditation-videos');
+        Storage::makeDirectory('public/focus-images');
+        Storage::makeDirectory('public/focus-audio');
+
+        // Copy placeholder files if they don't exist
+        if (!Storage::exists($meditationImagePath)) {
+            Storage::copy(resource_path('seed-assets/placeholder-meditation.jpg'), $meditationImagePath);
+        }
+        if (!Storage::exists($meditationVideoPath)) {
+            Storage::copy(resource_path('seed-assets/placeholder-meditation.mp4'), $meditationVideoPath);
+        }
+        if (!Storage::exists($focusImagePath)) {
+            Storage::copy(resource_path('seed-assets/placeholder-focus.jpg'), $focusImagePath);
+        }
+        if (!Storage::exists($focusAudioPath)) {
+            Storage::copy(resource_path('seed-assets/placeholder-focus.mp3'), $focusAudioPath);
+        }
+
         // Create meditation sessions for each section
         $meditationSections = [
             'featured' => [
@@ -104,8 +131,9 @@ class ContentSeeder extends Seeder
                     'category' => $meditation['category'],
                     'duration' => $meditation['duration'],
                     'description' => $meditation['description'],
-                    'image_url' => '/images/meditation-placeholder.jpg',
-                    'audio_url' => '/audio/meditation-placeholder.mp3',
+                    'image_url' => Storage::url($meditationImagePath),
+                    'video_url' => Storage::url($meditationVideoPath),
+                    'type' => 'video',
                     'is_featured' => $meditation['is_featured'] ?? false,
                 ]);
             }
@@ -116,6 +144,7 @@ class ContentSeeder extends Seeder
             'featured' => [
                 [
                     'title' => 'Deep Focus',
+                    'type' => 'music',
                     'category' => 'Focus Music',
                     'duration' => '60',
                     'description' => 'Enhance concentration with ambient sounds.',
@@ -125,12 +154,14 @@ class ContentSeeder extends Seeder
             'binaural_beats' => [
                 [
                     'title' => 'Alpha Waves',
+                    'type' => 'binaural',
                     'category' => 'Concentration',
                     'duration' => '45',
                     'description' => 'Binaural beats for enhanced focus.',
                 ],
                 [
                     'title' => 'Theta Meditation',
+                    'type' => 'binaural',
                     'category' => 'Meditation',
                     'duration' => '30',
                     'description' => 'Deep meditation with theta waves.',
@@ -139,12 +170,14 @@ class ContentSeeder extends Seeder
             'focus_music' => [
                 [
                     'title' => 'Study Session',
+                    'type' => 'music',
                     'category' => 'Study',
                     'duration' => '120',
                     'description' => 'Perfect background music for studying.',
                 ],
                 [
                     'title' => 'Work Flow',
+                    'type' => 'music',
                     'category' => 'Work',
                     'duration' => '90',
                     'description' => 'Stay productive with ambient music.',
@@ -153,12 +186,14 @@ class ContentSeeder extends Seeder
             'soundscapes' => [
                 [
                     'title' => 'Rain Forest',
+                    'type' => 'soundscape',
                     'category' => 'Nature',
                     'duration' => '60',
                     'description' => 'Immerse yourself in peaceful forest sounds.',
                 ],
                 [
                     'title' => 'Ocean Waves',
+                    'type' => 'soundscape',
                     'category' => 'Nature',
                     'duration' => '60',
                     'description' => 'Calming ocean sounds for relaxation.',
@@ -170,12 +205,13 @@ class ContentSeeder extends Seeder
             foreach ($sessions as $session) {
                 FocusSession::create([
                     'title' => $session['title'],
+                    'type' => $session['type'],
                     'section' => $section,
                     'category' => $session['category'],
                     'duration' => $session['duration'],
                     'description' => $session['description'],
-                    'image_url' => '/images/focus-placeholder.jpg',
-                    'audio_url' => '/audio/focus-placeholder.mp3',
+                    'image_url' => Storage::url($focusImagePath),
+                    'audio_url' => Storage::url($focusAudioPath),
                     'is_featured' => $session['is_featured'] ?? false,
                 ]);
             }
@@ -185,7 +221,7 @@ class ContentSeeder extends Seeder
         $course = Course::create([
             'title' => 'Mindfulness for Beginners',
             'description' => 'A comprehensive introduction to mindfulness meditation.',
-            'image_url' => '/images/course-placeholder.jpg',
+            'image_url' => Storage::url($meditationImagePath),
             'duration' => '8 weeks',
             'is_published' => true,
             'created_by' => 1, // Admin user ID
@@ -196,23 +232,16 @@ class ContentSeeder extends Seeder
             [
                 'title' => 'Introduction to Mindfulness',
                 'description' => 'Learn the basics of mindfulness meditation.',
-                'video_url' => '/videos/lesson-1.mp4',
+                'video_url' => Storage::url($meditationVideoPath),
                 'duration' => '15',
                 'order' => 1,
             ],
             [
                 'title' => 'Breath Awareness',
-                'description' => 'Focus on the breath as an anchor for attention.',
-                'video_url' => '/videos/lesson-2.mp4',
+                'description' => 'Focus on the breath to anchor your attention.',
+                'video_url' => Storage::url($meditationVideoPath),
                 'duration' => '20',
                 'order' => 2,
-            ],
-            [
-                'title' => 'Body Scan Meditation',
-                'description' => 'Develop body awareness through meditation.',
-                'video_url' => '/videos/lesson-3.mp4',
-                'duration' => '25',
-                'order' => 3,
             ],
         ];
 

@@ -11,7 +11,7 @@ class ActivityLog extends Model
         'user_id',
         'activity_type',
         'activity_name',
-        'duration_minutes',
+        'duration_minutes', 
         'metadata',
     ];
 

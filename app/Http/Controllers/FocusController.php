@@ -69,11 +69,10 @@ class FocusController extends Controller
         if (is_null($type)) {
             return 'meditation';
         }
-        
+
         return match ($type) {
             'binaural', 'music', 'soundscape' => 'music',
             default => 'meditation',
         };
     }
-
 }

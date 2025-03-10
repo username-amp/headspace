@@ -1,48 +1,42 @@
-import React from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { BottomNav } from '@/components/navigation/bottom-nav';
+import { cn } from '@/lib/utils';
+import { useAppearance } from '@/hooks/use-appearance';
+import { BottomNav } from '@/components/bottom-nav';
+import { Toaster } from 'sonner';
+import { usePage } from '@inertiajs/react';
+import { useTheme } from '@/components/theme-provider';
 
 interface BaseLayoutProps {
-    children: React.ReactNode;
     header?: React.ReactNode;
-    sidebar?: React.ReactNode;
+    children: React.ReactNode;
     className?: string;
-    currentPath: string;
+    sidebar?: React.ReactNode;
     isAdmin?: boolean;
 }
 
-export function BaseLayout({ children, header, sidebar, className = '', currentPath, isAdmin = false }: BaseLayoutProps) {
+export function BaseLayout({ header, children, className, sidebar, isAdmin }: BaseLayoutProps) {
+    const { theme } = useTheme();
+    const { appearance } = useAppearance();
+
+    // Use theme from context for consistent state across page navigation
+    const currentTheme = theme === 'system'
+        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        : theme;
+
     return (
-        <div className="min-h-screen bg-background">
-            {/* Header */}
-            {header && (
-                <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                    {header}
-                </header>
-            )}
-
-            <div className="flex min-h-[calc(100vh-4rem)]">
-                {/* Sidebar - Hidden on mobile */}
-                {sidebar && (
-                    <aside className="hidden border-r bg-muted/10 md:block md:w-64">
-                        <ScrollArea className="h-[calc(100vh-4rem)]">
-                            {sidebar}
-                        </ScrollArea>
-                    </aside>
-                )}
-
-                {/* Main Content */}
-                <main className={`flex-1 pb-20 md:pb-6 ${className}`}>
-                    <ScrollArea className="h-[calc(100vh-4rem)]">
-                        <div className="container mx-auto p-6">
-                            {children}
-                        </div>
-                    </ScrollArea>
-                </main>
+        <div className={cn('relative min-h-screen bg-background text-foreground', currentTheme)}>
+            {header}
+            <div className="flex min-h-screen">
+                {sidebar}
+                <main className={cn('flex-1 pb-20', className)}>{children}</main>
             </div>
-
-            {/* Bottom Navigation - Only shown on mobile for non-admin pages */}
-            {!isAdmin && <BottomNav currentPath={currentPath} />}
+            {!isAdmin && <BottomNav />}
+            <Toaster 
+                position="top-right" 
+                theme={currentTheme} 
+            />
         </div>
     );
 }
+
+// Re-export as both default and named export for backward compatibility
+export default BaseLayout;

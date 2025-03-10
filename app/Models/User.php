@@ -2,13 +2,12 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Carbon\Carbon;
 
 class User extends Authenticatable
 {
@@ -25,6 +24,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'appearance',
     ];
 
     /**
@@ -94,7 +94,7 @@ class User extends Authenticatable
         $lastMeditationDate = Carbon::parse($meditations->keys()->first())->startOfDay();
 
         // If the user hasn't meditated today, check if they meditated yesterday
-        if (!$currentDate->equalTo($lastMeditationDate)) {
+        if (! $currentDate->equalTo($lastMeditationDate)) {
             if ($currentDate->subDay()->equalTo($lastMeditationDate)) {
                 // User meditated yesterday, start counting from yesterday
                 $currentDate = $lastMeditationDate;
@@ -107,7 +107,7 @@ class User extends Authenticatable
         // Count consecutive days
         foreach ($meditations->keys() as $dateString) {
             $date = Carbon::parse($dateString)->startOfDay();
-            
+
             if ($currentDate->equalTo($date)) {
                 $streak++;
                 $currentDate->subDay();

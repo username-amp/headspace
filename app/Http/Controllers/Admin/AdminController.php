@@ -3,14 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Course;
-use App\Models\MeditationSession;
-use App\Models\FocusSession;
 use App\Models\ActivityLog;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Models\Course;
+use App\Models\FocusSession;
+use App\Models\MeditationSession;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class AdminController extends Controller
@@ -86,7 +85,7 @@ class AdminController extends Controller
 
     public function toggleUserStatus(User $user)
     {
-        $user->is_active = !$user->is_active;
+        $user->is_active = ! $user->is_active;
         $user->save();
 
         return back()->with('success', 'User status updated successfully.');
@@ -105,25 +104,24 @@ class AdminController extends Controller
             ->get()
             ->groupBy(['year', 'month']);
 
-            $popularContent = [
-                'meditations' => MeditationSession::withCount(['userMeditations as completion_count'])
-                    ->orderByDesc('completion_count')
-                    ->limit(5)
-                    ->get(),
-                'focus' => FocusSession::withCount(['userProgress as usage_count'])
-                    ->orderByDesc('usage_count')
-                    ->limit(5)
-                    ->get(),
-                'courses' => Course::select('courses.*')
-                    ->withCount(['lessons'])
-                    ->withCount(['progress as completion_count' => function ($query) {
-                        $query->whereNotNull('course_lesson_id');
-                    }])
-                    ->orderByDesc('completion_count')
-                    ->limit(5)
-                    ->get(),
-            ];
-
+        $popularContent = [
+            'meditations' => MeditationSession::withCount(['userMeditations as completion_count'])
+                ->orderByDesc('completion_count')
+                ->limit(5)
+                ->get(),
+            'focus' => FocusSession::withCount(['userProgress as usage_count'])
+                ->orderByDesc('usage_count')
+                ->limit(5)
+                ->get(),
+            'courses' => Course::select('courses.*')
+                ->withCount(['lessons'])
+                ->withCount(['progress as completion_count' => function ($query) {
+                    $query->whereNotNull('course_lesson_id');
+                }])
+                ->orderByDesc('completion_count')
+                ->limit(5)
+                ->get(),
+        ];
 
         return Inertia::render('admin/analytics', [
             'monthlyStats' => $monthlyStats,

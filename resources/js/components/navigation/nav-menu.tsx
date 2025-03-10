@@ -1,7 +1,7 @@
-import React from 'react';
-import { Link } from '@inertiajs/react';
 import { cn } from '@/lib/utils';
-import { Home, Compass, Brain, Settings, Users, BarChart } from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { BarChart, Brain, Compass, Home, Settings, Users } from 'lucide-react';
+import React from 'react';
 
 interface NavItemProps {
     href: string;
@@ -15,8 +15,8 @@ function NavItem({ href, icon, label, isActive }: NavItemProps) {
         <Link
             href={href}
             className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:bg-accent",
-                isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                'hover:bg-accent flex items-center gap-3 rounded-lg px-3 py-2 transition-all',
+                isActive ? 'bg-accent text-accent-foreground' : 'text-muted-foreground',
             )}
         >
             {icon}
@@ -82,11 +82,7 @@ export function NavMenu({ isAdmin = false, currentPath }: NavMenuProps) {
     return (
         <nav className="space-y-1 p-4">
             {items.map((item) => (
-                <NavItem
-                    key={item.href}
-                    {...item}
-                    isActive={currentPath === item.href}
-                />
+                <NavItem key={item.href} {...item} isActive={currentPath === item.href} />
             ))}
         </nav>
     );

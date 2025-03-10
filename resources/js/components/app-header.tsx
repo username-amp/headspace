@@ -3,18 +3,24 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
-import { type SharedData } from '@/types';
+import { type SharedData, type BreadcrumbItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { Search } from 'lucide-react';
 import AppLogo from './app-logo';
+import { cn } from '@/lib/utils';
 
-export function AppHeader() {
+interface AppHeaderProps {
+    breadcrumbs?: BreadcrumbItem[];
+    className?: string;
+}
+
+export function AppHeader({ breadcrumbs, className }: AppHeaderProps) {
     const page = usePage<SharedData>();
     const { auth } = page.props;
     const getInitials = useInitials();
 
     return (
-        <div className="border-b bg-white shadow-sm dark:bg-slate-900">
+        <div className={cn('border-b bg-card shadow-sm', className)}>
             <div className="mx-auto flex h-16 items-center justify-between px-4 md:max-w-7xl">
                 {/* Logo */}
                 <Link href="/dashboard" prefetch className="flex items-center">
@@ -34,7 +40,7 @@ export function AppHeader() {
                             <Button variant="ghost" className="size-10 rounded-full p-1">
                                 <Avatar className="size-8 overflow-hidden rounded-full">
                                     <AvatarImage src={auth.user.avatar} alt={auth.user.name} />
-                                    <AvatarFallback className="rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
+                                    <AvatarFallback className="rounded-lg bg-muted text-foreground">
                                         {getInitials(auth.user.name)}
                                     </AvatarFallback>
                                 </Avatar>

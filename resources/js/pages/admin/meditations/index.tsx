@@ -1,145 +1,222 @@
-import React from 'react';
-import { Head, Link } from '@inertiajs/react';
-import AdminLayout from '@/layouts/admin-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, BookOpen, Clock, Tag } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import ConfirmationModal from '@/components/ui/confirmation-modal';
+import AdminLayout from '@/layouts/admin-layout';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { Clock, PlayCircle, Plus, Tag, Video, Activity, FileVideo } from 'lucide-react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 
 interface MeditationSession {
-  id: number;
-  title: string;
-  section: string;
-  category: string;
-  duration: string;
-  description: string;
-  image_url: string;
-  audio_url: string;
-  is_featured: boolean;
-  user_meditations_count: number;
+    id: number;
+    title: string;
+    section: string;
+    category: string;
+    duration: string;
+    description: string;
+    image_url: string;
+    video_url: string;
+    is_featured: boolean;
+    user_progress_count: number;
+    user_meditations_count: number;
 }
 
-interface MeditationsIndexProps {
-  meditations: {
-    data: MeditationSession[];
-    current_page: number;
-    last_page: number;
-  };
+interface MeditationIndexProps {
+    meditationSessions: {
+        data: MeditationSession[];
+        current_page: number;
+        last_page: number;
+    };
 }
 
-const MeditationsIndex: React.FC<MeditationsIndexProps> = ({ meditations }) => {
-  const sectionLabels = {
-    featured: 'Featured Meditations',
-    today: "Today's Meditation",
-    new_popular: 'New and Popular',
-    quick: 'Quick Meditations',
-    courses: 'Courses',
-    singles: 'Singles',
-  };
+const MeditationIndex: React.FC<MeditationIndexProps> = ({ meditationSessions }) => {
+    const { delete: destroy } = useForm();
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [forceDeleteModalOpen, setForceDeleteModalOpen] = useState(false);
+    const [selectedSession, setSelectedSession] = useState<MeditationSession | null>(null);
 
-  const groupedMeditations = meditations.data.reduce((acc, meditation) => {
-    if (!acc[meditation.section]) {
-      acc[meditation.section] = [];
-    }
-    acc[meditation.section].push(meditation);
-    return acc;
-  }, {} as Record<string, MeditationSession[]>);
+    const handleDelete = (session: MeditationSession) => {
+        setSelectedSession(session);
+        setDeleteModalOpen(true);
+    };
 
-  return (
-    <AdminLayout>
-      <Head title="Meditation Management" />
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Meditation Management</h1>
-          <Link href={route('admin.meditations.create')}>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Meditation
-            </Button>
-          </Link>
-        </div>
+    const handleForceDelete = (session: MeditationSession) => {
+        setSelectedSession(session);
+        setForceDeleteModalOpen(true);
+    };
 
-        {/* Meditation Sections */}
-        {Object.entries(sectionLabels).map(([section, label]) => (
-          <div key={section} className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">{label}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {groupedMeditations[section]?.map(meditation => (
-                <Card key={meditation.id} className="overflow-hidden">
-                  <div className="aspect-video relative">
-                    <img
-                      src={meditation.image_url}
-                      alt={meditation.title}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                    {meditation.is_featured && (
-                      <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-2 py-1 rounded text-sm">
-                        Featured
-                      </div>
-                    )}
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="text-lg font-semibold mb-2">{meditation.title}</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4 mr-2" />
-                        {meditation.duration} minutes
-                      </div>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Tag className="h-4 w-4 mr-2" />
-                        {meditation.category}
-                      </div>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <BookOpen className="h-4 w-4 mr-2" />
-                        {meditation.user_meditations_count} completions
-                      </div>
+    const confirmDelete = () => {
+        if (!selectedSession) return;
+
+        destroy(route('admin.meditations.destroy', selectedSession.id), {
+            onSuccess: () => {
+                toast.success('Meditation video deleted successfully');
+                setDeleteModalOpen(false);
+            },
+            onError: () => {
+                toast.error('Failed to delete meditation video');
+                setDeleteModalOpen(false);
+            },
+        });
+    };
+
+    const confirmForceDelete = () => {
+        if (!selectedSession) return;
+
+        destroy(route('admin.meditations.force-delete', selectedSession.id), {
+            onSuccess: () => {
+                toast.success('Meditation video permanently deleted');
+                setForceDeleteModalOpen(false);
+            },
+            onError: () => {
+                toast.error('Failed to permanently delete meditation video');
+                setForceDeleteModalOpen(false);
+            },
+        });
+    };
+
+    const sectionLabels = {
+        featured: 'Featured Videos',
+        today: "Today's Videos",
+        new_popular: 'New & Popular',
+        quick: 'Quick Videos',
+        courses: 'Course Videos',
+        singles: 'Single Videos',
+    };
+
+    const groupedSessions = meditationSessions.data.reduce(
+        (acc, session) => {
+            if (!acc[session.section]) {
+                acc[session.section] = [];
+            }
+            acc[session.section].push(session);
+            return acc;
+        },
+        {} as Record<string, MeditationSession[]>,
+    );
+
+    return (
+        <AdminLayout>
+            <Head title="Meditation Videos Management" />
+            <div className="p-6">
+                <div className="mb-6 flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold">Meditation Videos</h1>
+                        <p className="text-muted-foreground mt-2">Manage meditation video content (up to 100MB per video)</p>
                     </div>
-                    <div className="mt-4 flex space-x-2">
-                      <Link href={route('admin.meditations.edit', meditation.id)}>
-                        <Button variant="outline" size="sm">
-                          Edit
+                    <Link href={route('admin.meditations.create')}>
+                        <Button>
+                            <FileVideo className="mr-2 h-4 w-4" />
+                            Add New Video
                         </Button>
-                      </Link>
-                      <Link
-                        href={route('admin.meditations.destroy', meditation.id)}
-                        method="delete"
-                        as="button"
-                        type="button"
-                      >
-                        <Button variant="destructive" size="sm">
-                          Delete
-                        </Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        ))}
+                    </Link>
+                </div>
 
-        {/* Pagination */}
-        {meditations.last_page > 1 && (
-          <div className="mt-6 flex justify-center">
-            <div className="flex space-x-2">
-              {Array.from({ length: meditations.last_page }, (_, i) => i + 1).map(page => (
-                <Link
-                  key={page}
-                  href={route('admin.meditations.index', { page })}
-                  className={`px-4 py-2 rounded ${
-                    page === meditations.current_page
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-card hover:bg-accent'
-                  }`}
-                >
-                  {page}
-                </Link>
-              ))}
+                {/* Meditation Content Sections */}
+                {Object.entries(sectionLabels).map(([section, label]) => (
+                    <div key={section} className="mb-8">
+                        <h2 className="mb-4 text-2xl font-semibold">{label}</h2>
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {groupedSessions[section]?.map((session) => (
+                                <Card key={session.id} className="overflow-hidden">
+                                    <div className="relative aspect-video">
+                                        <img src={session.image_url} alt={session.title} className="absolute inset-0 h-full w-full object-cover" />
+                                        {session.is_featured && (
+                                            <div className="absolute top-2 right-2 rounded bg-primary px-2 py-1 text-sm text-primary-foreground">
+                                                Featured
+                                            </div>
+                                        )}
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity hover:bg-black/60">
+                                            <PlayCircle className="h-12 w-12 text-white opacity-80" />
+                                        </div>
+                                    </div>
+                                    <CardContent className="p-4">
+                                        <h3 className="mb-2 text-lg font-semibold">{session.title}</h3>
+                                        <div className="space-y-2">
+                                            <div className="text-muted-foreground flex items-center text-sm">
+                                                <Clock className="mr-2 h-4 w-4" />
+                                                {session.duration} minutes
+                                            </div>
+                                            <div className="text-muted-foreground flex items-center text-sm">
+                                                <Tag className="mr-2 h-4 w-4" />
+                                                {session.category}
+                                            </div>
+                                            <div className="text-muted-foreground flex items-center text-sm">
+                                                <Video className="mr-2 h-4 w-4" />
+                                                {session.user_meditations_count} completed
+                                            </div>
+                                            <div className="text-muted-foreground flex items-center text-sm">
+                                                <Activity className="mr-2 h-4 w-4" />
+                                                {session.user_progress_count} in progress
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 flex space-x-2">
+                                            <Link href={route('admin.meditations.edit', session.id)}>
+                                                <Button variant="outline" size="sm">
+                                                    Edit
+                                                </Button>
+                                            </Link>
+                                            <Button 
+                                                variant="destructive" 
+                                                size="sm" 
+                                                onClick={() => handleDelete(session)}
+                                            >
+                                                Delete
+                                            </Button>
+                                            <Button 
+                                                variant="destructive" 
+                                                size="sm" 
+                                                onClick={() => handleForceDelete(session)}
+                                            >
+                                                Force Delete
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+
+                {/* Pagination */}
+                {meditationSessions.last_page > 1 && (
+                    <div className="mt-6 flex justify-center">
+                        <div className="flex space-x-2">
+                            {Array.from({ length: meditationSessions.last_page }, (_, i) => i + 1).map((page) => (
+                                <Link
+                                    key={page}
+                                    href={route('admin.meditations.index', { page })}
+                                    className={`rounded px-4 py-2 ${
+                                        page === meditationSessions.current_page ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-accent'
+                                    }`}
+                                >
+                                    {page}
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Delete Confirmation Modal */}
+                <ConfirmationModal
+                    isOpen={deleteModalOpen}
+                    onClose={() => setDeleteModalOpen(false)}
+                    onConfirm={confirmDelete}
+                    title="Delete Meditation Video"
+                    description="Are you sure you want to delete this meditation video? This will temporarily remove it from the platform. Users' progress will be preserved."
+                />
+
+                {/* Force Delete Confirmation Modal */}
+                <ConfirmationModal
+                    isOpen={forceDeleteModalOpen}
+                    onClose={() => setForceDeleteModalOpen(false)}
+                    onConfirm={confirmForceDelete}
+                    title="Permanently Delete Meditation Video"
+                    description="Are you sure you want to permanently delete this meditation video? This action cannot be undone. All associated files and user progress will be permanently deleted."
+                />
             </div>
-          </div>
-        )}
-      </div>
-    </AdminLayout>
-  );
+        </AdminLayout>
+    );
 };
 
-export default MeditationsIndex;
+export default MeditationIndex;

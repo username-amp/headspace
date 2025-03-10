@@ -6,9 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class Course extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'title',
         'description',
@@ -42,5 +46,22 @@ class Course extends Model
             'id',                  // Local key on Course table (typically id)
             'id'                   // Local key on CourseLesson table (typically id)
         );
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::forceDeleted(function ($course) {
+            // Clean up image file when the course is force deleted
+            if ($course->image_url) {
+                Storage::delete(str_replace('/storage/', 'public/', $course->image_url));
+            }
+
+            // Force delete all lessons
+            $course->lessons()->withTrashed()->get()->each(function ($lesson) {
+                $lesson->forceDelete();
+            });
+        });
     }
 }

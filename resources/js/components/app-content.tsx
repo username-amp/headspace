@@ -5,13 +5,14 @@ interface AppContentProps extends React.ComponentProps<'main'> {
     variant?: 'header' | 'sidebar';
 }
 
-export function AppContent({ variant = 'header', children, ...props }: AppContentProps) {
+export function AppContent({ variant = 'header', children, className, ...props }: AppContentProps) {
     return (
         <main
             className={cn(
-                'flex-1 overflow-y-auto bg-gray-50 dark:bg-slate-950',
-                variant === 'header' && 'w-full px-4 pb-20 pt-8 md:px-8',
-                variant === 'sidebar' && 'flex w-full flex-col'
+                'flex-1 overflow-y-auto bg-background',
+                variant === 'header' && 'w-full px-4 pt-8 pb-20 md:px-8',
+                variant === 'sidebar' && 'flex w-full flex-col',
+                className
             )}
             {...props}
         >

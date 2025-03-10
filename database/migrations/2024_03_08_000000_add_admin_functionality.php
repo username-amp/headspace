@@ -21,8 +21,9 @@ class AddAdminFunctionality extends Migration
             $table->string('image_url')->nullable();
             $table->string('duration');
             $table->boolean('is_published')->default(false);
-            $table->foreignId('created_by')->constrained('users');
+            $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
             $table->timestamps();
+            $table->softDeletes();
         });
 
         // Create course lessons table
@@ -35,20 +36,22 @@ class AddAdminFunctionality extends Migration
             $table->string('duration');
             $table->integer('order')->default(0);
             $table->timestamps();
+            $table->softDeletes();
         });
 
         // Create user progress table
         Schema::create('user_progress', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('course_lesson_id')->nullable()->constrained()->onDelete('set null');
-            $table->foreignId('meditation_session_id')->nullable()->constrained()->onDelete('set null');
-            $table->foreignId('focus_session_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('course_lesson_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('meditation_session_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('focus_session_id')->nullable()->constrained()->onDelete('cascade');
             $table->integer('progress_percentage')->default(0);
-            $table->timestamp('last_accessed_at');
+            $table->timestamp('last_accessed_at')->nullable();
             $table->boolean('is_completed')->default(false);
             $table->timestamp('completed_at')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         // Create activity logs table

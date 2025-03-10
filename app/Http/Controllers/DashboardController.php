@@ -13,7 +13,7 @@ class DashboardController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        
+
         // Get user's meditation stats
         $stats = [
             'currentStreak' => $this->calculateStreak($user->id),

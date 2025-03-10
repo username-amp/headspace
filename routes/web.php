@@ -1,12 +1,13 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\FocusController as AdminFocusController;
+use App\Http\Controllers\Admin\MeditationController as AdminMeditationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FocusController;
 use App\Http\Controllers\MeditateController;
-use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Settings\AppearanceController;
 use App\Http\Middleware\AdminMiddleware;
-use App\Http\Controllers\Admin\MeditationController as AdminMeditationController;
-use App\Http\Controllers\Admin\FocusController as AdminFocusController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -21,6 +22,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('focus', [FocusController::class, 'index'])->name('focus');
 });
 
+Route::middleware(['auth'])->group(function () {
+    // Settings routes
+    Route::prefix('settings')->group(function () {
+        Route::get('/appearance', [AppearanceController::class, 'index'])->name('settings.appearance');
+        Route::post('/appearance', [AppearanceController::class, 'update'])->name('settings.appearance.update');
+    });
+});
+
 // Admin Routes
 Route::middleware(['web', 'auth', AdminMiddleware::class])->prefix('admin')->name('admin.')->group(function () {
     // Admin Dashboard
@@ -33,9 +42,11 @@ Route::middleware(['web', 'auth', AdminMiddleware::class])->prefix('admin')->nam
     Route::post('/users/{user}/toggle-status', [AdminController::class, 'toggleUserStatus'])->name('users.toggle-status');
 
     // Meditation Content Management
+    Route::delete('meditations/{meditation}/force', [AdminMeditationController::class, 'forceDelete'])->name('meditations.force-delete');
     Route::resource('meditations', AdminMeditationController::class);
 
     // Focus Content Management
+    Route::delete('focus/{focusSession}/force', [AdminFocusController::class, 'forceDelete'])->name('focus.force-delete');
     Route::resource('focus', AdminFocusController::class);
 });
 
