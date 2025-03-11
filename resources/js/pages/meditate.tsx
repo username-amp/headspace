@@ -1,10 +1,11 @@
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { Clock, PlayCircle } from 'lucide-react';
 
 interface MeditationItem {
+    id: number;
     title: string;
     type: string;
     duration: string;
@@ -25,31 +26,33 @@ interface Props {
 
 function MeditationCard({ item }: { item: MeditationItem }) {
     return (
-        <Card className={`group relative overflow-hidden ${item.image ? 'p-0' : 'p-4'}`}>
-            <div className="aspect-video w-full overflow-hidden">
-                {item.image && (
-                    <img
-                        src={item.image}
-                        alt={item.title}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                )}
-            </div>
-            <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/60 to-transparent p-4">
-                <h3 className="text-lg font-semibold text-white">{item.title}</h3>
-                <div className="mt-1 flex items-center gap-2 text-sm text-white/80">
-                    <span>{item.type}</span>
-                    <span>•</span>
-                    <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        <span>{item.duration}</span>
+        <Link href={route('meditate.details', item.id)} className="block">
+            <Card className={`group relative overflow-hidden ${item.image ? 'p-0' : 'p-4'}`}>
+                <div className="aspect-video w-full overflow-hidden">
+                    {item.image && (
+                        <img
+                            src={item.image}
+                            alt={item.title}
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                    )}
+                </div>
+                <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/60 to-transparent p-4">
+                    <h3 className="text-lg font-semibold text-white">{item.title}</h3>
+                    <div className="mt-1 flex items-center gap-2 text-sm text-white/80">
+                        <span>{item.type}</span>
+                        <span>•</span>
+                        <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            <span>{item.duration}</span>
+                        </div>
+                    </div>
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-100">
+                        <PlayCircle className="h-12 w-12 text-white" />
                     </div>
                 </div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-100">
-                    <PlayCircle className="h-12 w-12 text-white" />
-                </div>
-            </div>
-        </Card>
+            </Card>
+        </Link>
     );
 }
 

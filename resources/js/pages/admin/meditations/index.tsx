@@ -84,6 +84,15 @@ const MeditationIndex: React.FC<MeditationIndexProps> = ({ meditationSessions })
         singles: 'Single Videos',
     };
 
+    const sectionColors = {
+        featured: 'bg-emerald-500/10 text-emerald-500',
+        today: 'bg-blue-500/10 text-blue-500',
+        new_popular: 'bg-purple-500/10 text-purple-500',
+        quick: 'bg-orange-500/10 text-orange-500',
+        courses: 'bg-rose-500/10 text-rose-500',
+        singles: 'bg-cyan-500/10 text-cyan-500',
+    };
+
     const groupedSessions = meditationSessions.data.reduce(
         (acc, session) => {
             if (!acc[session.section]) {
@@ -105,7 +114,7 @@ const MeditationIndex: React.FC<MeditationIndexProps> = ({ meditationSessions })
                         <p className="text-muted-foreground mt-2">Manage meditation video content (up to 100MB per video)</p>
                     </div>
                     <Link href={route('admin.meditations.create')}>
-                        <Button>
+                        <Button className="bg-emerald-500 hover:bg-emerald-600">
                             <FileVideo className="mr-2 h-4 w-4" />
                             Add New Video
                         </Button>
@@ -115,19 +124,26 @@ const MeditationIndex: React.FC<MeditationIndexProps> = ({ meditationSessions })
                 {/* Meditation Content Sections */}
                 {Object.entries(sectionLabels).map(([section, label]) => (
                     <div key={section} className="mb-8">
-                        <h2 className="mb-4 text-2xl font-semibold">{label}</h2>
+                        <div className="mb-4 flex items-center">
+                            <div className={`mr-3 rounded-lg p-2 ${sectionColors[section as keyof typeof sectionColors]}`}>
+                                <Video className="h-6 w-6" />
+                            </div>
+                            <h2 className="text-2xl font-semibold">{label}</h2>
+                        </div>
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {groupedSessions[section]?.map((session) => (
-                                <Card key={session.id} className="overflow-hidden">
+                                <Card key={session.id} className="group overflow-hidden transition-all hover:shadow-lg">
                                     <div className="relative aspect-video">
                                         <img src={session.image_url} alt={session.title} className="absolute inset-0 h-full w-full object-cover" />
                                         {session.is_featured && (
-                                            <div className="absolute top-2 right-2 rounded bg-primary px-2 py-1 text-sm text-primary-foreground">
+                                            <div className="absolute top-2 right-2 rounded bg-gradient-to-r from-emerald-500 to-blue-500 px-2 py-1 text-sm text-white">
                                                 Featured
                                             </div>
                                         )}
-                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity hover:bg-black/60">
-                                            <PlayCircle className="h-12 w-12 text-white opacity-80" />
+                                        <div className={`absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity group-hover:bg-black/60`}>
+                                            <div className={`rounded-full p-3 ${sectionColors[session.section as keyof typeof sectionColors]}`}>
+                                                <PlayCircle className="h-12 w-12" />
+                                            </div>
                                         </div>
                                     </div>
                                     <CardContent className="p-4">
@@ -152,7 +168,7 @@ const MeditationIndex: React.FC<MeditationIndexProps> = ({ meditationSessions })
                                         </div>
                                         <div className="mt-4 flex space-x-2">
                                             <Link href={route('admin.meditations.edit', session.id)}>
-                                                <Button variant="outline" size="sm">
+                                                <Button variant="outline" size="sm" className="hover:bg-gray-100 dark:hover:bg-gray-800">
                                                     Edit
                                                 </Button>
                                             </Link>
@@ -160,6 +176,7 @@ const MeditationIndex: React.FC<MeditationIndexProps> = ({ meditationSessions })
                                                 variant="destructive" 
                                                 size="sm" 
                                                 onClick={() => handleDelete(session)}
+                                                className="hover:bg-red-600"
                                             >
                                                 Delete
                                             </Button>
@@ -167,6 +184,7 @@ const MeditationIndex: React.FC<MeditationIndexProps> = ({ meditationSessions })
                                                 variant="destructive" 
                                                 size="sm" 
                                                 onClick={() => handleForceDelete(session)}
+                                                className="bg-red-700 hover:bg-red-800"
                                             >
                                                 Force Delete
                                             </Button>
@@ -186,8 +204,10 @@ const MeditationIndex: React.FC<MeditationIndexProps> = ({ meditationSessions })
                                 <Link
                                     key={page}
                                     href={route('admin.meditations.index', { page })}
-                                    className={`rounded px-4 py-2 ${
-                                        page === meditationSessions.current_page ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-accent'
+                                    className={`rounded px-4 py-2 transition-colors ${
+                                        page === meditationSessions.current_page 
+                                            ? 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white' 
+                                            : 'bg-card hover:bg-accent'
                                     }`}
                                 >
                                     {page}
@@ -212,7 +232,8 @@ const MeditationIndex: React.FC<MeditationIndexProps> = ({ meditationSessions })
                     onClose={() => setForceDeleteModalOpen(false)}
                     onConfirm={confirmForceDelete}
                     title="Permanently Delete Meditation Video"
-                    description="Are you sure you want to permanently delete this meditation video? This action cannot be undone. All associated files and user progress will be permanently deleted."
+                    description="Are you sure you want to permanently delete this meditation video? This action cannot be undone and will remove all associated files and user progress."
+                    variant="destructive"
                 />
             </div>
         </AdminLayout>

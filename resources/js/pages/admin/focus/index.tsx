@@ -86,6 +86,12 @@ const FocusIndex: React.FC<FocusIndexProps> = ({ focusSessions }) => {
         soundscape: Radio,
     };
 
+    const typeColors = {
+        binaural: 'bg-violet-500/10 text-violet-500',
+        music: 'bg-pink-500/10 text-pink-500',
+        soundscape: 'bg-amber-500/10 text-amber-500',
+    };
+
     const groupedSessions = focusSessions.data.reduce(
         (acc, session) => {
             if (!acc[session.type]) {
@@ -107,7 +113,7 @@ const FocusIndex: React.FC<FocusIndexProps> = ({ focusSessions }) => {
                         <p className="text-muted-foreground mt-2">Manage focus audio content (up to 50MB per audio file)</p>
                     </div>
                     <Link href={route('admin.focus.create')}>
-                        <Button>
+                        <Button className="bg-blue-500 hover:bg-blue-600">
                             <FileAudio className="mr-2 h-4 w-4" />
                             Add New Audio
                         </Button>
@@ -117,21 +123,29 @@ const FocusIndex: React.FC<FocusIndexProps> = ({ focusSessions }) => {
                 {/* Focus Content Sections */}
                 {Object.entries(typeLabels).map(([type, label]) => (
                     <div key={type} className="mb-8">
-                        <h2 className="mb-4 text-2xl font-semibold">{label}</h2>
+                        <div className="mb-4 flex items-center">
+                            <div className={`mr-3 rounded-lg p-2 ${typeColors[type as keyof typeof typeColors]}`}>
+                                {React.createElement(typeIcons[type as keyof typeof typeIcons], { className: 'h-6 w-6' })}
+                            </div>
+                            <h2 className="text-2xl font-semibold">{label}</h2>
+                        </div>
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {groupedSessions[type]?.map((session) => {
                                 const Icon = typeIcons[session.type as keyof typeof typeIcons];
+                                const colorClass = typeColors[session.type as keyof typeof typeColors];
                                 return (
-                                    <Card key={session.id} className="overflow-hidden">
+                                    <Card key={session.id} className="group overflow-hidden transition-all hover:shadow-lg">
                                         <div className="relative aspect-video">
                                             <img src={session.image_url} alt={session.title} className="absolute inset-0 h-full w-full object-cover" />
                                             {session.is_featured && (
-                                                <div className="absolute top-2 right-2 rounded bg-primary px-2 py-1 text-sm text-primary-foreground">
+                                                <div className="absolute top-2 right-2 rounded bg-gradient-to-r from-blue-500 to-purple-500 px-2 py-1 text-sm text-white">
                                                     Featured
                                                 </div>
                                             )}
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity hover:bg-black/60">
-                                                <Icon className="h-12 w-12 text-white opacity-80" />
+                                            <div className={`absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity group-hover:bg-black/60`}>
+                                                <div className={`rounded-full p-3 ${colorClass}`}>
+                                                    <Icon className="h-12 w-12" />
+                                                </div>
                                             </div>
                                         </div>
                                         <CardContent className="p-4">
@@ -152,7 +166,7 @@ const FocusIndex: React.FC<FocusIndexProps> = ({ focusSessions }) => {
                                             </div>
                                             <div className="mt-4 flex space-x-2">
                                                 <Link href={route('admin.focus.edit', session.id)}>
-                                                    <Button variant="outline" size="sm">
+                                                    <Button variant="outline" size="sm" className="hover:bg-gray-100 dark:hover:bg-gray-800">
                                                         Edit
                                                     </Button>
                                                 </Link>
@@ -160,6 +174,7 @@ const FocusIndex: React.FC<FocusIndexProps> = ({ focusSessions }) => {
                                                     variant="destructive" 
                                                     size="sm" 
                                                     onClick={() => handleDelete(session)}
+                                                    className="hover:bg-red-600"
                                                 >
                                                     Delete
                                                 </Button>
@@ -167,6 +182,7 @@ const FocusIndex: React.FC<FocusIndexProps> = ({ focusSessions }) => {
                                                     variant="destructive" 
                                                     size="sm" 
                                                     onClick={() => handleForceDelete(session)}
+                                                    className="bg-red-700 hover:bg-red-800"
                                                 >
                                                     Force Delete
                                                 </Button>
@@ -187,8 +203,10 @@ const FocusIndex: React.FC<FocusIndexProps> = ({ focusSessions }) => {
                                 <Link
                                     key={page}
                                     href={route('admin.focus.index', { page })}
-                                    className={`rounded px-4 py-2 ${
-                                        page === focusSessions.current_page ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-accent'
+                                    className={`rounded px-4 py-2 transition-colors ${
+                                        page === focusSessions.current_page 
+                                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' 
+                                            : 'bg-card hover:bg-accent'
                                     }`}
                                 >
                                     {page}
@@ -213,7 +231,8 @@ const FocusIndex: React.FC<FocusIndexProps> = ({ focusSessions }) => {
                     onClose={() => setForceDeleteModalOpen(false)}
                     onConfirm={confirmForceDelete}
                     title="Permanently Delete Focus Audio"
-                    description="Are you sure you want to permanently delete this focus audio? This action cannot be undone. All associated files and user progress will be permanently deleted."
+                    description="Are you sure you want to permanently delete this focus audio? This action cannot be undone and will remove all associated files and user progress."
+                    variant="destructive"
                 />
             </div>
         </AdminLayout>

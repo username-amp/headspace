@@ -16,10 +16,12 @@ class FocusController extends Controller
             ->take(4)
             ->get()
             ->map(fn ($session) => [
+                'id' => $session->id,
                 'title' => $session->title,
                 'type' => $session->type,
                 'duration' => $session->duration,
                 'image' => $session->image_url,
+                'audio_url' => $session->audio_url,
                 'icon' => $this->getIconForType($session->type),
             ]);
 
@@ -55,10 +57,12 @@ class FocusController extends Controller
             ->take(2)
             ->get()
             ->map(fn ($session) => [
+                'id' => $session->id,
                 'title' => $session->title,
                 'type' => $session->type,
                 'duration' => $session->duration,
                 'image' => $session->image_url,
+                'audio_url' => $session->audio_url,
                 'icon' => $this->getIconForType($session->type),
             ])
             ->toArray();

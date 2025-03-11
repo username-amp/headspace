@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\MeditationController as AdminMeditationController
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FocusController;
 use App\Http\Controllers\MeditateController;
+use App\Http\Controllers\MusicController;
 use App\Http\Controllers\Settings\AppearanceController;
 use App\Http\Middleware\AdminMiddleware;
 use Illuminate\Support\Facades\Route;
@@ -18,8 +19,10 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('meditate', [MeditateController::class, 'index'])->name('meditate');
+    Route::get('meditate/{meditation}', [MeditateController::class, 'show'])->name('meditate.details');
     Route::post('meditate/{session}/complete', [MeditateController::class, 'complete'])->name('meditate.complete');
     Route::get('focus', [FocusController::class, 'index'])->name('focus');
+    Route::get('/music', [MusicController::class, 'index'])->name('music');
 });
 
 Route::middleware(['auth'])->group(function () {

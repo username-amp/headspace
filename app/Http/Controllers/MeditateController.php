@@ -17,6 +17,7 @@ class MeditateController extends Controller
             ->take(4)
             ->get()
             ->map(fn ($session) => [
+                'id' => $session->id,
                 'title' => $session->title,
                 'type' => $session->type,
                 'duration' => $session->duration,
@@ -31,6 +32,7 @@ class MeditateController extends Controller
 
         if ($todaysMeditation) {
             $todaysMeditation = [
+                'id' => $todaysMeditation->id,
                 'title' => $todaysMeditation->title,
                 'type' => $todaysMeditation->type,
                 'duration' => $todaysMeditation->duration,
@@ -64,6 +66,38 @@ class MeditateController extends Controller
         ]);
     }
 
+    public function show(MeditationSession $meditation): Response
+    {
+        // Get related meditations from the same category
+        $relatedMeditations = MeditationSession::query()
+            ->where('id', '!=', $meditation->id)
+            ->where('category', $meditation->category)
+            ->take(3)
+            ->get()
+            ->map(fn ($session) => [
+                'id' => $session->id,
+                'title' => $session->title,
+                'type' => $session->type,
+                'duration' => $session->duration,
+                'image_url' => $session->image_url,
+            ]);
+
+        return Inertia::render('meditate/[id]', [
+            'meditation' => [
+                'id' => $meditation->id,
+                'title' => $meditation->title,
+                'description' => $meditation->description,
+                'type' => $meditation->type,
+                'category' => $meditation->category,
+                'duration' => $meditation->duration,
+                'image_url' => $meditation->image_url,
+                'video_url' => $meditation->video_url,
+                'is_featured' => $meditation->is_featured,
+            ],
+            'relatedMeditations' => $relatedMeditations,
+        ]);
+    }
+
     private function getMeditationsByCategory(string $category): array
     {
         return MeditationSession::query()
@@ -71,6 +105,7 @@ class MeditateController extends Controller
             ->take(3)
             ->get()
             ->map(fn ($session) => [
+                'id' => $session->id,
                 'title' => $session->title,
                 'type' => $session->type,
                 'duration' => $session->duration,
