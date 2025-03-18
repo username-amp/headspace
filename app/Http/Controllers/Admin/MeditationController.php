@@ -7,7 +7,10 @@ use App\Models\MeditationSession;
 use App\Models\UserProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 
 class MeditationController extends Controller
@@ -41,32 +44,61 @@ class MeditationController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'section' => 'required|string|in:featured,today,new_popular,quick,courses,singles',
-            'category' => 'required|string|max:255',
-            'duration' => 'required|string',
-            'description' => 'required|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-            'video' => 'required|mimes:mp4,mov,avi|max:102400', // 100MB max
-        ]);
+        try {
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'section' => 'required|string|in:featured,today,new_popular,quick,courses,singles',
+                'category' => 'required|string|max:255',
+                'duration' => 'required|string',
+                'description' => 'required|string',
+                'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+                'video_url' => 'required|string',
+                'is_featured' => 'required|in:0,1',
+            ]);
 
-        $imagePath = $request->file('image')->store('meditation-images', 'public');
-        $videoPath = $request->file('video')->store('meditation-videos', 'public');
+            Log::info('MeditationController: Starting meditation creation', [
+                'title' => $validated['title'],
+                'video_url' => $validated['video_url'],
+                'is_featured' => $validated['is_featured']
+            ]);
 
-        MeditationSession::create([
-            'title' => $validated['title'],
-            'section' => $validated['section'],
-            'category' => $validated['category'],
-            'duration' => $validated['duration'],
-            'description' => $validated['description'],
-            'image_url' => Storage::url($imagePath),
-            'video_url' => Storage::url($videoPath),
-            'is_featured' => $request->has('is_featured'),
-        ]);
+            // Handle image upload
+            if (!$request->hasFile('image') || !$request->file('image')->isValid()) {
+                throw new \Exception('Invalid image file');
+            }
+            $imagePath = $request->file('image')->store('meditation-images', 'public');
 
-        return redirect()->route('admin.meditations.index')
-            ->with('success', 'Meditation session created successfully.');
+            // Create the meditation session
+            $meditation = MeditationSession::create([
+                'title' => $validated['title'],
+                'section' => $validated['section'],
+                'category' => $validated['category'],
+                'duration' => $validated['duration'],
+                'description' => $validated['description'],
+                'image_url' => Storage::url($imagePath),
+                'video_url' => Storage::url($validated['video_url']),
+                'is_featured' => (bool)$validated['is_featured'],
+            ]);
+
+            Log::info('MeditationController: Meditation created successfully', [
+                'meditation_id' => $meditation->id,
+                'image_url' => $meditation->image_url,
+                'video_url' => $meditation->video_url
+            ]);
+
+            return redirect()->route('admin.meditations.index')
+                ->with('success', 'Meditation session created successfully.');
+
+        } catch (\Exception $e) {
+            Log::error('MeditationController: Failed to create meditation', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['error' => 'Failed to create meditation session: ' . $e->getMessage()]);
+        }
     }
 
     public function edit(MeditationSession $meditation)
@@ -171,6 +203,59 @@ class MeditationController extends Controller
             DB::rollBack();
             return redirect()->route('admin.meditations.index')
                 ->with('error', 'Failed to permanently delete meditation session: ' . $e->getMessage());
+        }
+    }
+
+    public function uploadChunk(Request $request)
+    {
+        try {
+            $chunk = $request->file('chunk');
+            $chunkNumber = $request->input('chunk_number');
+            $totalChunks = $request->input('total_chunks');
+            $filename = $request->input('filename');
+
+            // Create temporary directory if it doesn't exist
+            $tempDir = storage_path('app/chunks/' . md5($filename));
+            if (!file_exists($tempDir)) {
+                mkdir($tempDir, 0777, true);
+            }
+
+            // Store the chunk
+            $chunk->move($tempDir, "chunk_{$chunkNumber}");
+
+            // If this is the last chunk, merge all chunks
+            if ($chunkNumber == $totalChunks - 1) {
+                $finalPath = storage_path('app/public/meditation-videos/' . $filename);
+                $out = fopen($finalPath, "wb");
+
+                for ($i = 0; $i < $totalChunks; $i++) {
+                    $chunkPath = "{$tempDir}/chunk_{$i}";
+                    $in = fopen($chunkPath, "rb");
+                    stream_copy_to_stream($in, $out);
+                    fclose($in);
+                    unlink($chunkPath); // Delete the chunk
+                }
+
+                fclose($out);
+                rmdir($tempDir); // Remove the temporary directory
+
+                return response()->json([
+                    'message' => 'Video uploaded successfully',
+                    'path' => 'meditation-videos/' . $filename
+                ]);
+            }
+
+            return response()->json(['message' => 'Chunk uploaded successfully']);
+
+        } catch (\Exception $e) {
+            Log::error('Chunk upload failed', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to upload chunk: ' . $e->getMessage()
+            ], 422);
         }
     }
 }

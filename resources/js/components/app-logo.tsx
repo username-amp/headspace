@@ -1,14 +1,14 @@
-import AppLogoIcon from './app-logo-icon';
+import { Moon, Music } from 'lucide-react';
 
-export default function AppLogo() {
+export default function AppLogo({ className }: { className?: string }) {
     return (
-        <>
-            <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-md">
-                <AppLogoIcon className="size-5 fill-current text-white dark:text-black" />
+        <div className="flex items-center gap-2">
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 p-1">
+                <div className="relative h-full w-full">
+                    <Moon className="absolute inset-0 h-full w-full text-white" strokeWidth={2} />
+                    <Music className="absolute inset-0 h-full w-full text-white opacity-30" strokeWidth={2} />
+                </div>
             </div>
-            <div className="ml-1 grid flex-1 text-left text-lg">
-                <span className="mb-0.5 truncate leading-none font-bold">ZenSpace</span>
-            </div>
-        </>
+        </div>
     );
 }

@@ -23,6 +23,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('meditate/{session}/complete', [MeditateController::class, 'complete'])->name('meditate.complete');
     Route::get('focus', [FocusController::class, 'index'])->name('focus');
     Route::get('/music', [MusicController::class, 'index'])->name('music');
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::post('meditations/upload-chunk', [AdminMeditationController::class, 'uploadChunk'])->name('meditations.upload-chunk');
+    });
 });
 
 Route::middleware(['auth'])->group(function () {

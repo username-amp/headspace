@@ -4,9 +4,10 @@ import SelectInput from '@/components/select-input';
 import TextInput from '@/components/text-input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
-import React from 'react';
+import axios, { AxiosError, AxiosResponse } from 'axios';
+import React, { useState } from 'react';
 
 type FormData = {
     title: string;
@@ -19,8 +20,14 @@ type FormData = {
     is_featured: boolean;
 };
 
+type ChunkResponse = {
+    message: string;
+    path?: string;
+};
+
 export const MeditationForm: React.FC = () => {
-    const { data, setData, post, processing, errors } = useForm<FormData>({
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const { data, setData, processing, errors } = useForm<FormData>({
         title: '',
         description: '',
         section: '',
@@ -40,16 +47,116 @@ export const MeditationForm: React.FC = () => {
         { value: 'singles', label: 'Singles' },
     ];
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('admin.meditations.store'), {
-            forceFormData: true,
-        });
+
+        try {
+            let videoPath = '';
+            // First, upload the video file separately
+            if (data.video) {
+                const chunkSize = 1 * 1024 * 1024; // 1MB chunks
+                const totalChunks = Math.ceil(data.video.size / chunkSize);
+
+                const uploadChunk = async (chunk: number, retries = 3): Promise<AxiosResponse<ChunkResponse>> => {
+                    try {
+                        const start = chunk * chunkSize;
+                        const end = Math.min(start + chunkSize, data.video!.size);
+                        const videoChunk = data.video!.slice(start, end);
+
+                        const formData = new FormData();
+                        formData.append('chunk', videoChunk);
+                        formData.append('chunk_number', chunk.toString());
+                        formData.append('total_chunks', totalChunks.toString());
+                        formData.append('filename', data.video!.name);
+
+                        const response = await axios.post<ChunkResponse>(route('admin.meditations.upload-chunk'), formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            onUploadProgress: (progressEvent) => {
+                                if (progressEvent.total) {
+                                    const percentComplete = ((chunk + progressEvent.loaded / progressEvent.total) / totalChunks) * 100;
+                                    setUploadProgress(Math.round(percentComplete));
+                                }
+                            },
+                            timeout: 30000,
+                        });
+                        return response;
+                    } catch (error) {
+                        if (retries > 0) {
+                            await new Promise((resolve) => setTimeout(resolve, 1000));
+                            return uploadChunk(chunk, retries - 1);
+                        }
+                        throw error;
+                    }
+                };
+
+                // Upload chunks sequentially with progress tracking
+                for (let chunk = 0; chunk < totalChunks; chunk++) {
+                    try {
+                        const response = await uploadChunk(chunk);
+                        if (chunk === totalChunks - 1 && response.data.path) {
+                            videoPath = response.data.path;
+                        }
+                    } catch (error) {
+                        const axiosError = error as AxiosError;
+                        console.error(`Failed to upload chunk ${chunk}:`, axiosError.message);
+                        if (axiosError.response) {
+                            console.error('Response:', axiosError.response.data);
+                            console.error('Status:', axiosError.response.status);
+                        }
+                        throw new Error(`Failed to upload chunk ${chunk}: ${axiosError.message}`);
+                    }
+                }
+            }
+
+            // Now submit the rest of the form data
+            const formData = new FormData();
+            (Object.keys(data) as Array<keyof FormData>).forEach((key) => {
+                if (key !== 'video' && data[key] !== null) {
+                    if (key === 'is_featured') {
+                        formData.append(key, data[key] ? '1' : '0');
+                    } else {
+                        formData.append(key, data[key] as string | Blob);
+                    }
+                }
+            });
+
+            // Add the video path if we have one
+            if (videoPath) {
+                formData.append('video_url', videoPath);
+            }
+
+            router.post(route('admin.meditations.store'), formData, {
+                forceFormData: true,
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    // Reset form and progress
+                    setUploadProgress(0);
+                },
+                onError: (errors) => {
+                    console.error('Form submission errors:', errors);
+                    alert('Failed to create meditation: ' + Object.values(errors).join('\n'));
+                },
+            });
+        } catch (error) {
+            const axiosError = error as AxiosError;
+            console.error('Upload failed:', axiosError);
+            alert(`Upload failed: ${axiosError.message}`);
+            setUploadProgress(0);
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof Pick<FormData, 'video' | 'image'>) => {
-        if (e.target.files?.[0]) {
-            setData(field, e.target.files[0]);
+        const file = e.target.files?.[0];
+        if (file) {
+            // Show warning if file is too large
+            if (field === 'video' && file.size > 100 * 1024 * 1024) {
+                alert('Warning: Video file size exceeds 100MB limit');
+            }
+            setData(field, file);
         }
     };
 
@@ -121,7 +228,7 @@ export const MeditationForm: React.FC = () => {
             </div>
 
             <div>
-                <InputLabel htmlFor="video" value="Video File (MP4, MOV, AVI)" />
+                <InputLabel htmlFor="video" value="Video File (MP4, MOV, AVI) - Max 100MB" />
                 <input
                     id="video"
                     name="video"
@@ -131,19 +238,21 @@ export const MeditationForm: React.FC = () => {
                     className="mt-1 block w-full"
                 />
                 {errors.video && <p className="mt-1 text-sm text-red-600">{errors.video}</p>}
+                <p className="mt-1 text-sm text-gray-500">Maximum file size: 100MB</p>
             </div>
 
             <div>
-                <InputLabel htmlFor="image" value="Thumbnail Image" />
-                <input 
-                    id="image" 
+                <InputLabel htmlFor="image" value="Thumbnail Image (JPEG, PNG) - Max 2MB" />
+                <input
+                    id="image"
                     name="image"
-                    type="file" 
-                    accept="image/*" 
-                    onChange={(e) => handleFileChange(e, 'image')} 
-                    className="mt-1 block w-full" 
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    onChange={(e) => handleFileChange(e, 'image')}
+                    className="mt-1 block w-full"
                 />
                 {errors.image && <p className="mt-1 text-sm text-red-600">{errors.image}</p>}
+                <p className="mt-1 text-sm text-gray-500">Maximum file size: 2MB</p>
             </div>
 
             <div className="flex items-center">
@@ -159,9 +268,16 @@ export const MeditationForm: React.FC = () => {
                 </Label>
             </div>
 
+            {processing && uploadProgress > 0 && (
+                <div className="mt-4 h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+                    <div className="h-2.5 rounded-full bg-blue-600 transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
+                    <p className="mt-1 text-sm text-gray-600">Uploading: {uploadProgress}%</p>
+                </div>
+            )}
+
             <div className="flex items-center justify-end">
                 <PrimaryButton type="submit" disabled={processing}>
-                    Create Meditation
+                    {processing ? 'Uploading...' : 'Create Meditation'}
                 </PrimaryButton>
             </div>
         </form>

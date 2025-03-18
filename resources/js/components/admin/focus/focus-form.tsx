@@ -51,8 +51,18 @@ export const FocusForm: React.FC = () => {
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof Pick<FormData, 'audio' | 'image'>) => {
-        if (e.target.files?.[0]) {
-            setData(field, e.target.files[0]);
+        const file = e.target.files?.[0];
+        if (file) {
+            // Show warning if file is too large
+            if (field === 'audio' && file.size > 500 * 1024 * 1024) {
+                // 500MB warning
+                alert('Warning: Audio file size exceeds 500MB limit');
+            }
+            if (field === 'image' && file.size > 2 * 1024 * 1024) {
+                // 2MB warning
+                alert('Warning: Image file size exceeds 2MB limit');
+            }
+            setData(field, file);
         }
     };
 
@@ -130,29 +140,31 @@ export const FocusForm: React.FC = () => {
             </div>
 
             <div>
-                <InputLabel htmlFor="audio" value="Audio File (MP3, WAV, OGG)" />
+                <InputLabel htmlFor="audio" value="Audio File (MP3, WAV, OGG) - Max 500MB" />
                 <input
                     id="audio"
                     name="audio"
                     type="file"
-                    accept="audio/mp3,audio/wav,audio/ogg"
+                    accept="audio/mp3,audio/wav,audio/ogg,audio/mpeg"
                     onChange={(e) => handleFileChange(e, 'audio')}
                     className="mt-1 block w-full"
                 />
                 {errors.audio && <p className="mt-1 text-sm text-red-600">{errors.audio}</p>}
+                <p className="mt-1 text-sm text-gray-500">Maximum file size: 500MB</p>
             </div>
 
             <div>
-                <InputLabel htmlFor="image" value="Thumbnail Image" />
-                <input 
-                    id="image" 
+                <InputLabel htmlFor="image" value="Thumbnail Image (JPEG, PNG) - Max 2MB" />
+                <input
+                    id="image"
                     name="image"
-                    type="file" 
-                    accept="image/*" 
-                    onChange={(e) => handleFileChange(e, 'image')} 
-                    className="mt-1 block w-full" 
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    onChange={(e) => handleFileChange(e, 'image')}
+                    className="mt-1 block w-full"
                 />
                 {errors.image && <p className="mt-1 text-sm text-red-600">{errors.image}</p>}
+                <p className="mt-1 text-sm text-gray-500">Maximum file size: 2MB</p>
             </div>
 
             <div className="flex items-center justify-end">

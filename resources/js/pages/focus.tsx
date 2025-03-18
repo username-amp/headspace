@@ -1,14 +1,11 @@
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
 import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
-import { Link } from '@inertiajs/react';
-import { Clock, Music, PlayCircle, PauseCircle, Volume2, VolumeX, SkipBack, SkipForward } from 'lucide-react';
-import React, { useRef, useState, useEffect } from 'react';
+import { Head, Link } from '@inertiajs/react';
 import cn from 'classnames';
-import { usePage } from '@inertiajs/react';
+import { Headphones, Music, PauseCircle, PlayCircle, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 interface FocusItem {
     id: number;
@@ -113,7 +110,7 @@ function AudioPlayer({ currentTrack, onNext, onPrevious }: { currentTrack: Focus
     if (!currentTrack) return null;
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-lg border-t">
+        <div className="bg-background/80 fixed right-0 bottom-0 left-0 border-t backdrop-blur-lg">
             <div className="container mx-auto p-4">
                 <audio
                     ref={audioRef}
@@ -123,21 +120,21 @@ function AudioPlayer({ currentTrack, onNext, onPrevious }: { currentTrack: Focus
                     loop={isLooping}
                     onEnded={!isLooping ? onNext : undefined}
                 />
-                
+
                 {/* Track Info */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="mb-4 flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                        <div className="bg-primary/10 text-primary p-2 rounded-lg">
+                        <div className="bg-primary/10 text-primary rounded-lg p-2">
                             <Music className="h-6 w-6" />
                         </div>
                         <div>
                             <h3 className="font-medium">{currentTrack.title}</h3>
-                            <p className="text-sm text-muted-foreground">{currentTrack.type}</p>
+                            <p className="text-muted-foreground text-sm">{currentTrack.type}</p>
                         </div>
                     </div>
-                    
+
                     {/* Time */}
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-muted-foreground text-sm">
                         {formatTime(currentTime)} / {formatTime(duration)}
                     </div>
                 </div>
@@ -145,62 +142,31 @@ function AudioPlayer({ currentTrack, onNext, onPrevious }: { currentTrack: Focus
                 {/* Controls */}
                 <div className="flex flex-col space-y-4">
                     {/* Progress Bar */}
-                    <Slider
-                        value={[progress]}
-                        onValueChange={handleProgressChange}
-                        max={100}
-                        step={0.1}
-                        className="w-full"
-                    />
+                    <Slider value={[progress]} onValueChange={handleProgressChange} max={100} step={0.1} className="w-full" />
 
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                             {/* Volume Control */}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="hover:bg-primary/10 hover:text-primary"
-                                onClick={toggleMute}
-                            >
+                            <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary" onClick={toggleMute}>
                                 {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                             </Button>
-                            <Slider
-                                value={[volume]}
-                                onValueChange={handleVolumeChange}
-                                max={1}
-                                step={0.01}
-                                className="w-24"
-                            />
+                            <Slider value={[volume]} onValueChange={handleVolumeChange} max={1} step={0.01} className="w-24" />
                         </div>
 
                         {/* Playback Controls */}
                         <div className="flex items-center space-x-4">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="hover:bg-primary/10 hover:text-primary"
-                                onClick={onPrevious}
-                            >
+                            <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary" onClick={onPrevious}>
                                 <SkipBack className="h-5 w-5" />
                             </Button>
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-12 w-12 rounded-full hover:bg-primary/10 hover:text-primary"
+                                className="hover:bg-primary/10 hover:text-primary h-12 w-12 rounded-full"
                                 onClick={togglePlay}
                             >
-                                {isPlaying ? (
-                                    <PauseCircle className="h-8 w-8" />
-                                ) : (
-                                    <PlayCircle className="h-8 w-8" />
-                                )}
+                                {isPlaying ? <PauseCircle className="h-8 w-8" /> : <PlayCircle className="h-8 w-8" />}
                             </Button>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="hover:bg-primary/10 hover:text-primary"
-                                onClick={onNext}
-                            >
+                            <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary" onClick={onNext}>
                                 <SkipForward className="h-5 w-5" />
                             </Button>
                         </div>
@@ -209,10 +175,7 @@ function AudioPlayer({ currentTrack, onNext, onPrevious }: { currentTrack: Focus
                         <Button
                             variant="ghost"
                             size="icon"
-                            className={cn(
-                                "hover:bg-primary/10 hover:text-primary",
-                                isLooping && "text-primary bg-primary/10"
-                            )}
+                            className={cn('hover:bg-primary/10 hover:text-primary', isLooping && 'text-primary bg-primary/10')}
                             onClick={toggleRepeat}
                         >
                             <svg
@@ -238,65 +201,73 @@ function AudioPlayer({ currentTrack, onNext, onPrevious }: { currentTrack: Focus
     );
 }
 
-function FocusItem({ item }: { item: FocusItem }) {
+function FocusItem({
+    item,
+    allItems,
+    onSelect,
+}: {
+    item: FocusItem;
+    allItems: FocusItem[];
+    onSelect: (item: FocusItem, allItems: FocusItem[]) => void;
+}) {
+    const handleClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        onSelect(item, allItems);
+    };
+
     return (
         <Link
             href={`/music?track=${item.id}`}
             preserveScroll
-            className="group relative aspect-square overflow-hidden rounded-xl border bg-muted/30"
+            onClick={handleClick}
+            className="group relative aspect-square overflow-hidden rounded-2xl bg-black/5 backdrop-blur-sm transition-transform hover:scale-[1.02]"
         >
-            <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/50 to-transparent" />
+            <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/60 to-transparent" />
             <img
                 src={item.image}
                 alt={item.title}
-                className="absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-105"
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 will-change-transform group-hover:scale-110"
             />
             <div className="absolute inset-x-0 bottom-0 z-20 p-4">
                 <h3 className="font-medium text-white">{item.title}</h3>
                 <p className="text-sm text-white/70">{item.duration} minutes</p>
             </div>
-            <div className="absolute right-4 top-4 z-20">
-                <div className="rounded-lg bg-white/10 p-2 backdrop-blur-sm">
-                    <div className="flex items-center space-x-1">
-                        <Music className="h-5 w-5 text-white" />
-                        <span className="text-xs text-white">Open Player</span>
-                    </div>
+            <div className="absolute top-4 right-4 z-20">
+                <div className="rounded-full bg-white/10 p-2 backdrop-blur-sm">
+                    <Music className="h-5 w-5 text-white" />
                 </div>
+            </div>
+            <div className="absolute top-1/2 left-1/2 z-20 -translate-x-1/2 -translate-y-1/2 transform">
+                <Button
+                    size="icon"
+                    className="h-16 w-16 rounded-full bg-white/20 opacity-0 backdrop-blur-sm transition-all group-hover:opacity-100 hover:scale-110 hover:bg-white/30"
+                >
+                    <PlayCircle className="h-8 w-8 text-white" />
+                </Button>
             </div>
         </Link>
     );
 }
 
-function FocusCard({ item, onClick }: { item: FocusItem; onClick: () => void }) {
+function EmptyState() {
     return (
-        <Card 
-            className={`group relative overflow-hidden cursor-pointer ${item.image ? 'p-0' : 'p-4'}`}
-            onClick={onClick}
-        >
-            <div className="aspect-video w-full overflow-hidden">
-                {item.image && (
-                    <img
-                        src={item.image}
-                        alt={item.title}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                )}
-            </div>
-            <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/60 to-transparent p-4">
-                <h3 className="text-lg font-semibold text-white">{item.title}</h3>
-                <div className="mt-1 flex items-center gap-2 text-sm text-white/80">
-                    <span>{item.type}</span>
-                    <span>•</span>
-                    <div className="flex items-center gap-1">
-                        {item.icon === 'music' ? <Music className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                        <span>{item.duration}</span>
-                    </div>
-                </div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-100">
-                    <PlayCircle className="h-12 w-12 text-white" />
+        <div className="flex h-[60vh] flex-col items-center justify-center text-center">
+            <div className="relative mb-6">
+                <div className="absolute inset-0 animate-pulse rounded-full bg-indigo-500/20 blur-xl" />
+                <div className="relative rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 p-4">
+                    <Headphones className="h-12 w-12 text-white" />
                 </div>
             </div>
-        </Card>
+            <h2 className="mb-2 text-2xl font-semibold text-slate-900 dark:text-white">Finding Your Focus...</h2>
+            <p className="mb-6 max-w-md text-slate-600 dark:text-slate-400">
+                We're preparing some amazing focus sessions for you. Check back soon for a journey into deep concentration and productivity.
+            </p>
+            <div className="flex space-x-4">
+                <div className="h-2 w-2 animate-bounce rounded-full bg-indigo-500 [animation-delay:-0.3s]" />
+                <div className="h-2 w-2 animate-bounce rounded-full bg-indigo-500 [animation-delay:-0.15s]" />
+                <div className="h-2 w-2 animate-bounce rounded-full bg-indigo-500" />
+            </div>
+        </div>
     );
 }
 
@@ -305,9 +276,27 @@ export default function Focus({ featuredItems, sections }: Props) {
     const [playlist, setPlaylist] = useState<FocusItem[]>([]);
     const [currentIndex, setCurrentIndex] = useState(-1);
 
-    const handleTrackSelect = (item: FocusItem, allTracks: FocusItem[]) => {
-        setPlaylist(allTracks);
-        const index = allTracks.findIndex(track => track.id === item.id);
+    // Check if there are any items in featured or sections
+    const hasNoContent =
+        (!featuredItems || featuredItems.length === 0) &&
+        (!sections || sections.length === 0 || sections.every((section) => !section.items || section.items.length === 0));
+
+    // Show empty state if no content
+    if (hasNoContent) {
+        return (
+            <AppLayout>
+                <Head title="Focus" />
+                <EmptyState />
+            </AppLayout>
+        );
+    }
+
+    // Get all items for playlist
+    const allItems = [...featuredItems, ...sections.flatMap((section) => section.items)];
+
+    const handleTrackSelect = (item: FocusItem, items: FocusItem[]) => {
+        setPlaylist(items);
+        const index = items.findIndex((track) => track.id === item.id);
         setCurrentIndex(index);
         setCurrentTrack(item);
     };
@@ -334,29 +323,30 @@ export default function Focus({ featuredItems, sections }: Props) {
             <ScrollArea className="h-[calc(100vh-8rem)]">
                 <div className="space-y-8 pb-32">
                     {/* Featured Section */}
-                    <section>
-                        <h1 className="mb-2 text-3xl font-bold text-slate-900 dark:text-white">Focus</h1>
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                            {featuredItems.map((item, index) => (
-                                <FocusItem 
-                                    key={index} 
-                                    item={item} 
-                                />
-                            ))}
+                    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 p-8 text-white">
+                        <div className="relative z-10">
+                            <h1 className="text-3xl font-bold">Focus Mode</h1>
+                            <p className="mt-2 text-white/90">Enhance your concentration with curated ambient sounds</p>
+                            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                                {featuredItems.map((item, index) => (
+                                    <FocusItem key={index} item={item} allItems={allItems} onSelect={handleTrackSelect} />
+                                ))}
+                            </div>
                         </div>
+                        <div className="absolute top-0 right-0 h-64 w-64 translate-x-1/3 -translate-y-1/3 rounded-full bg-white/10 blur-3xl" />
+                        <div className="absolute bottom-0 left-0 h-32 w-32 -translate-x-1/2 translate-y-1/2 rounded-full bg-purple-300/20 blur-2xl" />
                     </section>
 
                     {/* Other Sections */}
                     {sections.map((section, index) => (
-                        <section key={index}>
-                            <h2 className="mb-2 text-xl font-semibold text-slate-900 dark:text-white">{section.title}</h2>
-                            {section.description && <p className="mb-4 text-slate-600 dark:text-slate-400">{section.description}</p>}
+                        <section key={index} className="relative">
+                            <div className="mb-6">
+                                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{section.title}</h2>
+                                {section.description && <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{section.description}</p>}
+                            </div>
                             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                 {section.items.map((item, itemIndex) => (
-                                    <FocusItem 
-                                        key={itemIndex} 
-                                        item={item} 
-                                    />
+                                    <FocusItem key={itemIndex} item={item} allItems={allItems} onSelect={handleTrackSelect} />
                                 ))}
                             </div>
                         </section>
@@ -364,11 +354,7 @@ export default function Focus({ featuredItems, sections }: Props) {
                 </div>
             </ScrollArea>
 
-            <AudioPlayer 
-                currentTrack={currentTrack}
-                onNext={handleNext}
-                onPrevious={handlePrevious}
-            />
+            <AudioPlayer currentTrack={currentTrack} onNext={handleNext} onPrevious={handlePrevious} />
         </AppLayout>
     );
 }

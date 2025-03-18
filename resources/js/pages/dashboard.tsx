@@ -1,187 +1,273 @@
+import { BottomNav } from '@/components/bottom-nav';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Head, Link, usePage } from '@inertiajs/react';
-import { Clock, PlayCircle, Activity, Calendar, Crown, Flame, Target } from 'lucide-react';
-import { AppHeader } from '@/components/app-header';
 import AppHeaderLayout from '@/layouts/app/app-header-layout';
-import { BottomNav } from '@/components/bottom-nav';
+import { Head, Link } from '@inertiajs/react';
+import { Activity, Calendar, Clock, Flame, Heart, Moon, PlayCircle, Sparkles, Star, Target } from 'lucide-react';
 
-interface DashboardProps {
+// Mock data for initial dashboard state
+const mockData = {
     stats: {
         currentStreak: {
-            days: number;
-            message: string;
-        };
+            days: 7,
+            message: 'Keep up the great work!',
+        },
         totalMinutes: {
-            minutes: number;
-            message: string;
-        };
+            minutes: 420,
+            message: '7 hours of mindfulness',
+        },
         level: {
-            level: number;
-            title: string;
-        };
+            level: 3,
+            title: 'Mindful Explorer',
+        },
         dailyGoals: {
-            completed: number;
-            total: number;
-            message: string;
-        };
-    };
-    streakDays: Array<{
-        date: string;
-        completed: boolean;
-    }>;
-    weeklyActivity: Array<{
-        day: string;
-        minutes: number;
-    }>;
-    recommendedSessions: Array<{
-        title: string;
-        type: string;
-        duration: string;
-        image: string;
-    }>;
-}
+            completed: 3,
+            total: 4,
+            message: 'Almost there!',
+        },
+    },
+    streakDays: [
+        { date: '2024-03-08', completed: true },
+        { date: '2024-03-09', completed: true },
+        { date: '2024-03-10', completed: true },
+        { date: '2024-03-11', completed: true },
+        { date: '2024-03-12', completed: true },
+        { date: '2024-03-13', completed: true },
+        { date: '2024-03-14', completed: true },
+    ],
+    weeklyActivity: [
+        { day: 'Mon', minutes: 45 },
+        { day: 'Tue', minutes: 30 },
+        { day: 'Wed', minutes: 60 },
+        { day: 'Thu', minutes: 25 },
+        { day: 'Fri', minutes: 40 },
+        { day: 'Sat', minutes: 55 },
+        { day: 'Sun', minutes: 35 },
+    ],
+    recommendedSessions: [
+        {
+            title: 'Morning Mindfulness',
+            type: 'Guided',
+            duration: '10 min',
+            image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=2070',
+        },
+        {
+            title: 'Stress Relief',
+            type: 'Breathing',
+            duration: '15 min',
+            image: 'https://images.unsplash.com/photo-1474418397713-7ede21d49118?q=80&w=2053',
+        },
+        {
+            title: 'Deep Focus',
+            type: 'Music',
+            duration: '30 min',
+            image: 'https://images.unsplash.com/photo-1528715471579-d1bcf0ba5e83?q=80&w=2023',
+        },
+    ],
+};
 
-export default function Dashboard({ stats, streakDays, weeklyActivity, recommendedSessions }: DashboardProps) {
-    const { url } = usePage();
+export default function Dashboard() {
     const statCards = [
         {
-            title: 'Current Streak',
-            value: `${stats.currentStreak.days} days`,
-            description: stats.currentStreak.message,
-            icon: <Flame className="h-5 w-5 text-orange-600" />,
+            title: 'Mindful Streak',
+            value: `${mockData.stats.currentStreak.days} days`,
+            description: mockData.stats.currentStreak.message,
+            icon: <Flame className="h-6 w-6 text-rose-500" />,
+            gradient: 'from-rose-500/20 via-orange-500/20 to-rose-500/10',
+            ringColor: 'group-hover:ring-rose-500/30',
         },
         {
-            title: 'Total Minutes',
-            value: stats.totalMinutes.minutes.toString(),
-            description: stats.totalMinutes.message,
-            icon: <Clock className="h-5 w-5 text-blue-600" />,
+            title: 'Peace Time',
+            value: mockData.stats.totalMinutes.minutes.toString(),
+            description: mockData.stats.totalMinutes.message,
+            icon: <Moon className="h-6 w-6 text-violet-500" />,
+            gradient: 'from-violet-500/20 via-purple-500/20 to-violet-500/10',
+            ringColor: 'group-hover:ring-violet-500/30',
         },
         {
-            title: 'Level',
-            value: `Level ${stats.level.level}`,
-            description: stats.level.title,
-            icon: <Crown className="h-5 w-5 text-yellow-600" />,
+            title: 'Zen Level',
+            value: `Level ${mockData.stats.level.level}`,
+            description: mockData.stats.level.title,
+            icon: <Star className="h-6 w-6 text-amber-500" />,
+            gradient: 'from-amber-500/20 via-yellow-500/20 to-amber-500/10',
+            ringColor: 'group-hover:ring-amber-500/30',
         },
         {
-            title: 'Goals',
-            value: `${stats.dailyGoals.completed}/${stats.dailyGoals.total}`,
-            description: stats.dailyGoals.message,
-            icon: <Target className="h-5 w-5 text-green-600" />,
+            title: 'Daily Goals',
+            value: `${mockData.stats.dailyGoals.completed}/${mockData.stats.dailyGoals.total}`,
+            description: mockData.stats.dailyGoals.message,
+            icon: <Target className="h-6 w-6 text-teal-500" />,
+            gradient: 'from-teal-500/20 via-emerald-500/20 to-teal-500/10',
+            ringColor: 'group-hover:ring-teal-500/30',
         },
     ];
 
     return (
-        <>
-            <AppHeaderLayout>
-                <Head title="Dashboard" />
+        <AppHeaderLayout>
+            <Head title="Dashboard" />
 
-                <div className="container space-y-8 px-4 py-6 md:px-6">
-                    {/* Welcome Section */}
-                    <div>
-                        <h1 className="text-3xl font-bold">Welcome back!</h1>
-                        <p className="text-muted-foreground mt-2">Track your progress and continue your mindfulness journey.</p>
+            <div className="container space-y-8 px-4 py-8 md:px-6">
+                {/* Welcome Section with Animation */}
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 p-8 text-white shadow-xl">
+                    <div className="relative z-10">
+                        <div className="mb-4 inline-flex rounded-full bg-white/20 px-4 py-2 backdrop-blur-sm">
+                            <Heart className="mr-2 h-5 w-5 text-pink-300" />
+                            <span className="text-sm font-medium">Welcome back! ✨</span>
+                        </div>
+                        <h1 className="text-4xl font-bold tracking-tight">Time to Find Your Peace</h1>
+                        <p className="mt-2 max-w-md text-lg text-white/90">
+                            Your daily dose of tranquility awaits. Let's begin your mindful journey today.
+                        </p>
+                        <Button className="mt-6 bg-white/20 text-white backdrop-blur-sm transition-all hover:scale-105 hover:bg-white/30" asChild>
+                            <Link href="/meditate">
+                                <PlayCircle className="mr-2 h-5 w-5" />
+                                Start Today's Session
+                            </Link>
+                        </Button>
                     </div>
+                    <div className="absolute top-0 right-0 h-64 w-64 translate-x-1/3 -translate-y-1/3 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 opacity-50 blur-3xl" />
+                    <div className="absolute bottom-0 left-0 h-32 w-32 -translate-x-1/2 translate-y-1/2 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 opacity-50 blur-2xl" />
+                </div>
 
-                    {/* Stats Grid */}
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        {statCards.map((stat, index) => (
-                            <Card key={index} className="p-6">
+                {/* Stats Grid */}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {statCards.map((stat, index) => (
+                        <Card
+                            key={index}
+                            className={`group hover:ring-offset-background overflow-hidden transition-all hover:scale-[1.02] hover:ring-2 ${stat.ringColor} hover:ring-offset-2`}
+                        >
+                            <CardContent className={`relative bg-gradient-to-br p-6 ${stat.gradient}`}>
                                 <div className="flex items-center gap-4">
-                                    {stat.icon}
-                                    <div>
-                                        <p className="text-sm font-medium">{stat.title}</p>
-                                        <h3 className="text-2xl font-bold">{stat.value}</h3>
-                                        <p className="text-muted-foreground text-sm">{stat.description}</p>
+                                    <div className="rounded-xl bg-white/95 p-2.5 shadow-lg ring-1 ring-white/50 transition-transform duration-300 group-hover:scale-110 group-hover:shadow-2xl">
+                                        {stat.icon}
                                     </div>
+                                    <div>
+                                        <p className="text-foreground/80 text-sm font-medium">{stat.title}</p>
+                                        <h3 className="from-foreground to-foreground/80 bg-gradient-to-br bg-clip-text text-2xl font-bold tracking-tight text-transparent">
+                                            {stat.value}
+                                        </h3>
+                                        <p className="text-foreground/60 text-sm">{stat.description}</p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+
+                {/* Streak Calendar */}
+                <Card className="group hover:ring-offset-background overflow-hidden transition-all hover:ring-2 hover:ring-indigo-500/30 hover:ring-offset-2">
+                    <CardContent className="p-6">
+                        <div className="mb-6 flex items-center justify-between">
+                            <div>
+                                <h2 className="flex items-center gap-2 text-xl font-semibold">
+                                    <div className="rounded-lg bg-rose-500/10 p-1.5">
+                                        <Flame className="h-5 w-5 text-rose-500" />
+                                    </div>
+                                    Your Meditation Journey
+                                </h2>
+                                <p className="text-foreground/60 text-sm">Keep the streak alive!</p>
+                            </div>
+                            <div className="bg-foreground/5 rounded-lg p-1.5">
+                                <Calendar className="text-foreground/70 h-5 w-5" />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-7 gap-2">
+                            {mockData.streakDays.map((day, index) => (
+                                <div
+                                    key={index}
+                                    className={`group relative flex h-14 w-full items-center justify-center rounded-xl text-sm font-medium transition-all ${
+                                        day.completed
+                                            ? 'bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 text-white shadow-lg'
+                                            : 'bg-muted/50 text-foreground/60 hover:bg-muted hover:text-foreground/80'
+                                    }`}
+                                >
+                                    <span className="relative z-10">{new Date(day.date).getDate()}</span>
+                                    {day.completed && (
+                                        <div className="absolute inset-0 rounded-xl bg-white/20 opacity-0 transition-opacity group-hover:opacity-100" />
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Activity Chart */}
+                <Card className="group hover:ring-offset-background overflow-hidden transition-all hover:ring-2 hover:ring-violet-500/30 hover:ring-offset-2">
+                    <CardContent className="p-6">
+                        <div className="mb-6 flex items-center justify-between">
+                            <div>
+                                <h2 className="flex items-center gap-2 text-xl font-semibold">
+                                    <div className="rounded-lg bg-violet-500/10 p-1.5">
+                                        <Activity className="h-5 w-5 text-violet-500" />
+                                    </div>
+                                    Mindfulness Activity
+                                </h2>
+                                <p className="text-foreground/60 text-sm">Your weekly meditation progress</p>
+                            </div>
+                        </div>
+                        <div className="flex h-48 items-end gap-3">
+                            {mockData.weeklyActivity.map((day, index) => (
+                                <div key={index} className="group relative flex-1">
+                                    <div className="bg-foreground text-background absolute -top-8 left-1/2 -translate-x-1/2 rounded-lg px-3 py-1.5 text-xs opacity-0 transition-opacity group-hover:opacity-100">
+                                        {day.minutes}m
+                                    </div>
+                                    <div
+                                        className="w-full rounded-t-lg bg-gradient-to-t from-violet-500 via-purple-500 to-fuchsia-500 shadow-lg transition-all group-hover:opacity-90"
+                                        style={{ height: `${(day.minutes / 60) * 100}%` }}
+                                    />
+                                    <div className="text-foreground/60 mt-2 text-center text-sm font-medium">{day.day}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Recommended Sessions */}
+                <div>
+                    <div className="mb-6">
+                        <h2 className="flex items-center gap-2 text-xl font-semibold">
+                            <div className="rounded-lg bg-amber-500/10 p-1.5">
+                                <Sparkles className="h-5 w-5 text-amber-500" />
+                            </div>
+                            Curated for Your Journey
+                        </h2>
+                        <p className="text-foreground/60 text-sm">Personalized sessions to enhance your practice</p>
+                    </div>
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        {mockData.recommendedSessions.map((session, index) => (
+                            <Card
+                                key={index}
+                                className="group hover:ring-offset-background relative overflow-hidden transition-all hover:ring-2 hover:ring-violet-500/30 hover:ring-offset-2"
+                            >
+                                <div className="aspect-video w-full overflow-hidden">
+                                    <img
+                                        src={session.image}
+                                        alt={session.title}
+                                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                    />
+                                </div>
+                                <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6">
+                                    <h3 className="text-lg font-semibold text-white">{session.title}</h3>
+                                    <div className="mt-2 flex items-center gap-3 text-sm text-white/90">
+                                        <span className="rounded-full bg-white/20 px-3 py-1 backdrop-blur-sm">{session.type}</span>
+                                        <div className="flex items-center gap-1">
+                                            <Clock className="h-4 w-4" />
+                                            <span>{session.duration}</span>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        size="icon"
+                                        className="absolute top-1/2 left-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/20 opacity-0 backdrop-blur-sm transition-all group-hover:opacity-100 hover:scale-110 hover:bg-white/30"
+                                    >
+                                        <PlayCircle className="h-8 w-8 text-white" />
+                                    </Button>
                                 </div>
                             </Card>
                         ))}
                     </div>
-
-                    {/* Streak Calendar */}
-                    <Card className="p-6">
-                        <div className="mb-6 flex items-center justify-between">
-                            <div>
-                                <h2 className="text-xl font-semibold">Meditation Streak</h2>
-                                <p className="text-muted-foreground text-sm">Your daily meditation progress</p>
-                            </div>
-                            <Calendar className="text-muted-foreground h-5 w-5" />
-                        </div>
-                        <div className="grid grid-cols-7 gap-2">
-                            {streakDays.map((day, index) => (
-                                <div
-                                    key={index}
-                                    className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-all ${
-                                        day.completed ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground'
-                                    }`}
-                                >
-                                    {new Date(day.date).getDate()}
-                                </div>
-                            ))}
-                        </div>
-                    </Card>
-
-                    {/* Activity Chart */}
-                    <Card className="p-6">
-                        <div className="mb-6 flex items-center justify-between">
-                            <div>
-                                <h2 className="text-xl font-semibold">Weekly Activity</h2>
-                                <p className="text-muted-foreground text-sm">Minutes spent meditating</p>
-                            </div>
-                            <Activity className="text-muted-foreground h-5 w-5" />
-                        </div>
-                        <div className="flex h-40 items-end gap-2">
-                            {weeklyActivity.map((day, index) => (
-                                <div key={index} className="group relative flex-1">
-                                    <div className="text-muted-foreground absolute -top-6 w-full text-center text-xs opacity-0 transition-opacity group-hover:opacity-100">
-                                        {day.minutes}m
-                                    </div>
-                                    <div className="bg-primary/20 hover:bg-primary/30 transition-colors" style={{ height: `${(day.minutes / 60) * 100}%` }} />
-                                </div>
-                            ))}
-                        </div>
-                        <div className="text-muted-foreground mt-4 flex justify-between text-sm">
-                            {weeklyActivity.map((day, index) => (
-                                <span key={index}>{day.day}</span>
-                            ))}
-                        </div>
-                    </Card>
-
-                    {/* Recommended Sessions */}
-                    <div>
-                        <div className="mb-6">
-                            <h2 className="text-xl font-semibold">Recommended for You</h2>
-                            <p className="text-muted-foreground text-sm">Based on your meditation history</p>
-                        </div>
-                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                            {recommendedSessions.map((session, index) => (
-                                <Card key={index} className="group relative overflow-hidden p-0 transition-all hover:shadow-lg">
-                                    <div className="aspect-video w-full overflow-hidden">
-                                        <img src={session.image} alt={session.title} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
-                                    </div>
-                                    <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4">
-                                        <h3 className="text-lg font-semibold text-white">{session.title}</h3>
-                                        <div className="mt-1 flex items-center gap-2 text-sm text-white/90">
-                                            <span>{session.type}</span>
-                                            <span>•</span>
-                                            <div className="flex items-center gap-1">
-                                                <Clock className="h-3 w-3" />
-                                                <span>{session.duration}</span>
-                                            </div>
-                                        </div>
-                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-90 transform opacity-0 transition-all group-hover:scale-100 group-hover:opacity-100">
-                                            <PlayCircle className="h-16 w-16 text-white drop-shadow-lg" />
-                                        </div>
-                                    </div>
-                                </Card>
-                            ))}
-                        </div>
-                    </div>
                 </div>
-            </AppHeaderLayout>
-            <BottomNav />
-        </>
+            </div>
+       
+        </AppHeaderLayout>
     );
 }

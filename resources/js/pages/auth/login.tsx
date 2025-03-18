@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
+import { KeyRound, LoaderCircle, Mail } from 'lucide-react';
 import { FormEventHandler } from 'react';
 
 type LoginForm = {
@@ -38,91 +38,94 @@ export default function Login({ status, canResetPassword }: LoginProps) {
         <>
             <Head title="Log in" />
             <div className="flex min-h-screen">
-                {/* Left Side - Image Section */}
-                <div
-                    className="hidden w-1/2 bg-cover bg-center md:flex"
-                    style={{
-                        backgroundImage:
-                            'url("https://www.verywellmind.com/thmb/MQWhY7u5mTDfaO4vgDHRvnHYcaA=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/GettyImages-938890492-becc3fc4757849bea672f148454943f9.jpg")',
-                    }}
-                ></div>
-
-                {/* Right Side - Form Section */}
-                <div className="flex w-full items-center justify-center bg-white md:w-1/2">
-                    <div className="w-full max-w-md space-y-6 p-8">
-                        <div className="flex flex-col items-center gap-4">
-                            <Link href={route('home')} className="flex flex-col items-center gap-2 font-medium">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full">
-                                    <AppLogoIcon className="h-8 w-8 fill-current" />
+                {/* Left Side - Form Section */}
+                <div className="flex w-full items-center justify-center bg-gradient-to-br from-white to-gray-50 px-4 md:w-1/2">
+                    <div className="w-full max-w-md space-y-8">
+                        <div className="flex flex-col items-center gap-6 text-center">
+                            <Link href={route('home')} className="group flex flex-col items-center gap-2 transition-transform hover:scale-105">
+                                <div className="relative">
+                                    <div className="absolute inset-0 animate-pulse rounded-full bg-indigo-500/20 blur-xl" />
+                                    <div className="relative rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 p-4">
+                                        <AppLogoIcon className="h-8 w-8 text-white" />
+                                    </div>
                                 </div>
-                                <span className="text-2xl font-bold text-yellow-800">Log in to your account</span>
+                                <span className="bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-2xl font-bold text-transparent">
+                                    Welcome Back
+                                </span>
                             </Link>
-                            <p className="text-center text-sm text-gray-600">Enter your email and password below to log in</p>
+                            <p className="text-muted-foreground text-sm">Enter your credentials to access your account</p>
                         </div>
-                        {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
+
+                        {status && (
+                            <div className="rounded-lg bg-green-50 p-4 text-center text-sm font-medium text-green-600 dark:bg-green-900/50 dark:text-green-400">
+                                {status}
+                            </div>
+                        )}
+
                         <form className="space-y-6" onSubmit={submit}>
-                            <div>
-                                <Label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                    Email address
-                                </Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="email"
-                                    value={data.email}
-                                    onChange={(e) => setData('email', e.target.value)}
-                                    placeholder="email@example.com"
-                                    className="mt-1 block w-full rounded-md border-gray-300 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                                <InputError message={errors.email} />
-                            </div>
-                            <div>
-                                <div className="flex items-center justify-between">
-                                    <Label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                                        Password
-                                    </Label>
-                                    {canResetPassword && (
-                                        <TextLink
-                                            href={route('password.request')}
-                                            className="text-sm text-indigo-600 hover:text-indigo-800"
-                                            tabIndex={5}
-                                        >
-                                            Forgot password?
-                                        </TextLink>
-                                    )}
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="email">Email address</Label>
+                                    <div className="relative">
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            required
+                                            autoFocus
+                                            tabIndex={1}
+                                            autoComplete="email"
+                                            value={data.email}
+                                            onChange={(e) => setData('email', e.target.value)}
+                                            placeholder="email@example.com"
+                                            className="pl-10"
+                                        />
+                                        <Mail className="text-muted-foreground absolute top-2.5 left-3 h-5 w-5" />
+                                    </div>
+                                    <InputError message={errors.email} />
                                 </div>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    required
-                                    tabIndex={2}
-                                    autoComplete="current-password"
-                                    value={data.password}
-                                    onChange={(e) => setData('password', e.target.value)}
-                                    placeholder="Your secure password"
-                                    className="mt-1 block w-full rounded-md border-gray-300 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                />
-                                <InputError message={errors.password} />
+
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <Label htmlFor="password">Password</Label>
+                                        {canResetPassword && (
+                                            <TextLink href={route('password.request')} className="text-sm hover:text-indigo-600" tabIndex={5}>
+                                                Forgot password?
+                                            </TextLink>
+                                        )}
+                                    </div>
+                                    <div className="relative">
+                                        <Input
+                                            id="password"
+                                            type="password"
+                                            required
+                                            tabIndex={2}
+                                            autoComplete="current-password"
+                                            value={data.password}
+                                            onChange={(e) => setData('password', e.target.value)}
+                                            placeholder="Enter your password"
+                                            className="pl-10"
+                                        />
+                                        <KeyRound className="text-muted-foreground absolute top-2.5 left-3 h-5 w-5" />
+                                    </div>
+                                    <InputError message={errors.password} />
+                                </div>
+
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="remember"
+                                        checked={data.remember}
+                                        onCheckedChange={(checked) => setData('remember', checked === true)}
+                                        tabIndex={3}
+                                    />
+                                    <Label htmlFor="remember" className="text-sm">
+                                        Remember me
+                                    </Label>
+                                </div>
                             </div>
-                            <div className="flex items-center">
-                                <Checkbox
-                                    id="remember"
-                                    name="remember"
-                                    checked={data.remember}
-                                    onClick={() => setData('remember', !data.remember)}
-                                    tabIndex={3}
-                                    className="h-4 w-4 rounded border-gray-300 text-indigo-600"
-                                />
-                                <Label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
-                                    Remember me
-                                </Label>
-                            </div>
+
                             <Button
                                 type="submit"
-                                className="w-full rounded-md bg-indigo-600 text-white transition hover:bg-indigo-700"
+                                className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white transition-all hover:from-indigo-600 hover:to-purple-700"
                                 tabIndex={4}
                                 disabled={processing}
                             >
@@ -130,12 +133,33 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 Log in
                             </Button>
                         </form>
-                        <p className="mt-6 text-center text-sm text-gray-600">
+
+                        <p className="text-muted-foreground text-center text-sm">
                             Don't have an account?{' '}
-                            <TextLink href={route('register')} tabIndex={5} className="text-indigo-600 hover:text-indigo-800">
+                            <TextLink href={route('register')} tabIndex={5} className="hover:text-indigo-600">
                                 Sign up
                             </TextLink>
                         </p>
+                    </div>
+                </div>
+
+                {/* Right Side - Image Section */}
+                <div className="hidden md:block md:w-1/2">
+                    <div className="relative h-full w-full">
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/90 to-purple-600/90" />
+                        <img
+                            src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b"
+                            alt="Meditation"
+                            className="h-full w-full object-cover"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center p-8">
+                            <blockquote className="space-y-4">
+                                <p className="text-2xl font-medium text-balance text-white">
+                                    "Meditation is not about stopping thoughts, but recognizing that we are more than our thoughts and our feelings."
+                                </p>
+                                <footer className="text-white/80">— Thich Nhat Hanh</footer>
+                            </blockquote>
+                        </div>
                     </div>
                 </div>
             </div>

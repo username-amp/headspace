@@ -11,58 +11,22 @@ class MeditateController extends Controller
 {
     public function index(): Response
     {
-        // Get featured meditations
-        $featuredMeditations = MeditationSession::query()
-            ->featured()
-            ->take(4)
-            ->get()
-            ->map(fn ($session) => [
-                'id' => $session->id,
-                'title' => $session->title,
-                'type' => $session->type,
-                'duration' => $session->duration,
-                'image' => $session->image_url,
-            ]);
-
-        // Get today's meditation
-        $todaysMeditation = MeditationSession::query()
-            ->where('category', 'daily')
-            ->inRandomOrder()
-            ->first();
-
-        if ($todaysMeditation) {
-            $todaysMeditation = [
-                'id' => $todaysMeditation->id,
-                'title' => $todaysMeditation->title,
-                'type' => $todaysMeditation->type,
-                'duration' => $todaysMeditation->duration,
-                'image' => $todaysMeditation->image_url,
-            ];
-        }
-
-        // Get sections with their meditations
-        $sections = [
-            [
-                'title' => 'New and Popular',
-                'description' => 'The latest meditations and top picks from our team.',
-                'items' => $this->getMeditationsByCategory('new_and_popular'),
-            ],
-            [
-                'title' => 'Quick Meditations',
-                'description' => 'Give yourself a moment to breathe.',
-                'items' => $this->getMeditationsByCategory('quick'),
-            ],
-            [
-                'title' => 'Courses and Singles',
-                'description' => 'Guided meditations for any moment.',
-                'items' => $this->getMeditationsByCategory('courses'),
-            ],
-        ];
+        $meditations = MeditationSession::orderBy('created_at', 'desc')->get();
 
         return Inertia::render('meditate', [
-            'featuredMeditations' => $featuredMeditations,
-            'todaysMeditation' => $todaysMeditation,
-            'sections' => $sections,
+            'meditations' => $meditations->map(function ($meditation) {
+                return [
+                    'id' => $meditation->id,
+                    'title' => $meditation->title,
+                    'category' => $meditation->category,
+                    'duration' => $meditation->duration,
+                    'description' => $meditation->description,
+                    'image_url' => $meditation->image_url,
+                    'video_url' => $meditation->video_url,
+                    'is_featured' => (bool) $meditation->is_featured,
+                    'section' => $meditation->section,
+                ];
+            }),
         ]);
     }
 
