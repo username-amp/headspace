@@ -72,7 +72,7 @@ export default function Register({ status }: RegisterProps) {
                                             value={data.name}
                                             onChange={(e) => setData('name', e.target.value)}
                                             placeholder="Your Name"
-                                            className="pl-10"
+                                            className="pl-10 text-black"
                                         />
                                         <User className="text-muted-foreground absolute top-2.5 left-3 h-5 w-5" />
                                     </div>
@@ -89,7 +89,7 @@ export default function Register({ status }: RegisterProps) {
                                             value={data.email}
                                             onChange={(e) => setData('email', e.target.value)}
                                             placeholder="email@example.com"
-                                            className="pl-10"
+                                            className="pl-10 text-black"
                                         />
                                         <Mail className="text-muted-foreground absolute top-2.5 left-3 h-5 w-5" />
                                     </div>
@@ -106,7 +106,7 @@ export default function Register({ status }: RegisterProps) {
                                             value={data.password}
                                             onChange={(e) => setData('password', e.target.value)}
                                             placeholder="Create a secure password"
-                                            className="pl-10"
+                                            className="pl-10 text-black"
                                         />
                                         <KeyRound className="text-muted-foreground absolute top-2.5 left-3 h-5 w-5" />
                                     </div>
@@ -123,7 +123,7 @@ export default function Register({ status }: RegisterProps) {
                                             value={data.password_confirmation}
                                             onChange={(e) => setData('password_confirmation', e.target.value)}
                                             placeholder="Confirm your password"
-                                            className="pl-10"
+                                            className="pl-10 text-black"
                                         />
                                         <Lock className="text-muted-foreground absolute top-2.5 left-3 h-5 w-5" />
                                     </div>

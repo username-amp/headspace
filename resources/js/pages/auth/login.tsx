@@ -77,7 +77,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                             value={data.email}
                                             onChange={(e) => setData('email', e.target.value)}
                                             placeholder="email@example.com"
-                                            className="pl-10"
+                                            className="pl-10 text-black"
                                         />
                                         <Mail className="text-muted-foreground absolute top-2.5 left-3 h-5 w-5" />
                                     </div>
@@ -103,7 +103,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                             value={data.password}
                                             onChange={(e) => setData('password', e.target.value)}
                                             placeholder="Enter your password"
-                                            className="pl-10"
+                                            className="pl-10 text-black"
                                         />
                                         <KeyRound className="text-muted-foreground absolute top-2.5 left-3 h-5 w-5" />
                                     </div>

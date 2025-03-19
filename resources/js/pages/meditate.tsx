@@ -126,6 +126,16 @@ export default function Meditate({ meditations }: Props) {
             <Head title="Meditate" />
             <ScrollArea className="h-[calc(100vh-8rem)]">
                 <div className="space-y-8 pb-20">
+                    {/* Hero Section */}
+                    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 p-8 text-white">
+                        <div className="relative z-10">
+                            <h1 className="text-3xl font-bold">Meditate Mode</h1>
+                            <p className="mt-2 text-white/90">Watch and listen to our meditation videos</p>
+                        </div>
+                        <div className="absolute top-0 right-0 h-64 w-64 translate-x-1/3 -translate-y-1/3 rounded-full bg-white/10 blur-3xl" />
+                        <div className="absolute bottom-0 left-0 h-32 w-32 -translate-x-1/2 translate-y-1/2 rounded-full bg-purple-300/20 blur-2xl" />
+                    </section>
+
                     {/* Featured Section */}
                     {featuredMeditations.length > 0 && (
                         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 p-8 text-white">

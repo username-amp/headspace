@@ -12,8 +12,7 @@ class FocusController extends Controller
     {
         // Get featured focus items
         $featuredItems = FocusSession::query()
-            ->featured()
-            ->take(4)
+            ->where('section', 'featured')
             ->get()
             ->map(fn ($session) => [
                 'id' => $session->id,
@@ -30,17 +29,17 @@ class FocusController extends Controller
             [
                 'title' => 'Binaural Beats',
                 'description' => 'A special collection of harmonic frequencies — scientifically proven to enhance focus, relaxation, and calm',
-                'items' => $this->getFocusContentByCategory('binaural_beats'),
+                'items' => $this->getFocusContentBySection('binaural_beats'),
             ],
             [
                 'title' => 'Focus Music',
                 'description' => 'Find and keep focus with music from world-renowned artists',
-                'items' => $this->getFocusContentByCategory('focus_music'),
+                'items' => $this->getFocusContentBySection('focus_music'),
             ],
             [
                 'title' => 'Soundscapes',
                 'description' => '3D recordings from the world\'s loveliest places',
-                'items' => $this->getFocusContentByCategory('soundscapes'),
+                'items' => $this->getFocusContentBySection('soundscapes'),
             ],
         ];
 
@@ -50,11 +49,10 @@ class FocusController extends Controller
         ]);
     }
 
-    private function getFocusContentByCategory(string $category): array
+    private function getFocusContentBySection(string $section): array
     {
         return FocusSession::query()
-            ->byCategory($category)
-            ->take(2)
+            ->where('section', $section)
             ->get()
             ->map(fn ($session) => [
                 'id' => $session->id,

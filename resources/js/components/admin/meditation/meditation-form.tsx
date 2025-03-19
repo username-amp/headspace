@@ -27,6 +27,14 @@ type ChunkResponse = {
 
 export const MeditationForm: React.FC = () => {
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [videoDuration, setVideoDuration] = useState<string>('');
+    const [uploadStats, setUploadStats] = useState<{
+        currentChunk: number;
+        totalChunks: number;
+        uploadSpeed: number;
+        timeRemaining: number;
+    } | null>(null);
+    const [uploadStartTime, setUploadStartTime] = useState<number>(0);
     const { data, setData, processing, errors } = useForm<FormData>({
         title: '',
         description: '',
@@ -47,8 +55,67 @@ export const MeditationForm: React.FC = () => {
         { value: 'singles', label: 'Singles' },
     ];
 
+    const formatDuration = (seconds: number): string => {
+        const minutes = Math.floor(seconds / 60);
+        // Ensure we always have at least 1 minute
+        return `${Math.max(1, minutes)} min`;
+    };
+
+    const detectVideoDuration = (file: File) => {
+        console.log('Starting video duration detection for:', file.name);
+
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+
+        // Add error handling
+        video.onerror = (e) => {
+            console.error('Error loading video:', e);
+            // Set a default duration of 1 minute if we can't detect it
+            const defaultDuration = formatDuration(60);
+            setVideoDuration(defaultDuration);
+            setData('duration', defaultDuration);
+        };
+
+        video.onloadedmetadata = () => {
+            console.log('Video metadata loaded, duration:', video.duration);
+            if (video.duration && isFinite(video.duration)) {
+                const duration = formatDuration(Math.round(video.duration));
+                console.log('Formatted duration:', duration);
+                setVideoDuration(duration);
+                setData('duration', duration);
+            } else {
+                console.warn('Invalid duration detected:', video.duration);
+                // Set a default duration of 1 minute if we get an invalid duration
+                const defaultDuration = formatDuration(60);
+                setVideoDuration(defaultDuration);
+                setData('duration', defaultDuration);
+            }
+            window.URL.revokeObjectURL(video.src);
+        };
+
+        const videoUrl = URL.createObjectURL(file);
+        console.log('Created video URL:', videoUrl);
+        video.src = videoUrl;
+    };
+
+    const formatBytes = (bytes: number): string => {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+    };
+
+    const formatTime = (seconds: number): string => {
+        if (seconds < 60) return `${Math.round(seconds)}s`;
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.round(seconds % 60);
+        return `${minutes}m ${remainingSeconds}s`;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setUploadStartTime(Date.now());
 
         try {
             let videoPath = '';
@@ -56,6 +123,12 @@ export const MeditationForm: React.FC = () => {
             if (data.video) {
                 const chunkSize = 1 * 1024 * 1024; // 1MB chunks
                 const totalChunks = Math.ceil(data.video.size / chunkSize);
+                setUploadStats({
+                    currentChunk: 0,
+                    totalChunks,
+                    uploadSpeed: 0,
+                    timeRemaining: 0,
+                });
 
                 const uploadChunk = async (chunk: number, retries = 3): Promise<AxiosResponse<ChunkResponse>> => {
                     try {
@@ -78,6 +151,20 @@ export const MeditationForm: React.FC = () => {
                                 if (progressEvent.total) {
                                     const percentComplete = ((chunk + progressEvent.loaded / progressEvent.total) / totalChunks) * 100;
                                     setUploadProgress(Math.round(percentComplete));
+
+                                    // Calculate upload speed and time remaining
+                                    const elapsedTime = (Date.now() - uploadStartTime) / 1000; // in seconds
+                                    const uploadedBytes = chunk * chunkSize + progressEvent.loaded;
+                                    const uploadSpeed = uploadedBytes / elapsedTime; // bytes per second
+                                    const remainingBytes = data.video!.size - uploadedBytes;
+                                    const timeRemaining = remainingBytes / uploadSpeed;
+
+                                    setUploadStats({
+                                        currentChunk: chunk + 1,
+                                        totalChunks,
+                                        uploadSpeed,
+                                        timeRemaining,
+                                    });
                                 }
                             },
                             timeout: 30000,
@@ -135,6 +222,7 @@ export const MeditationForm: React.FC = () => {
                 onSuccess: () => {
                     // Reset form and progress
                     setUploadProgress(0);
+                    setVideoDuration('');
                 },
                 onError: (errors) => {
                     console.error('Form submission errors:', errors);
@@ -152,11 +240,16 @@ export const MeditationForm: React.FC = () => {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof Pick<FormData, 'video' | 'image'>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // Show warning if file is too large
-            if (field === 'video' && file.size > 100 * 1024 * 1024) {
-                alert('Warning: Video file size exceeds 100MB limit');
+            // Show warning if file is too large (1GB = 1024 * 1024 * 1024 bytes)
+            if (field === 'video' && file.size > 1024 * 1024 * 1024) {
+                alert('Warning: Video file size exceeds 1GB limit');
             }
             setData(field, file);
+
+            // Detect duration if it's a video file
+            if (field === 'video') {
+                detectVideoDuration(file);
+            }
         }
     };
 
@@ -216,19 +309,7 @@ export const MeditationForm: React.FC = () => {
             </div>
 
             <div>
-                <InputLabel htmlFor="duration" value="Duration (minutes)" />
-                <TextInput
-                    id="duration"
-                    type="text"
-                    value={data.duration}
-                    onChange={(e) => setData('duration', e.target.value)}
-                    className="mt-1 block w-full"
-                    error={errors.duration}
-                />
-            </div>
-
-            <div>
-                <InputLabel htmlFor="video" value="Video File (MP4, MOV, AVI) - Max 100MB" />
+                <InputLabel htmlFor="video" value="Video File (MP4, MOV, AVI) - Max 1GB" />
                 <input
                     id="video"
                     name="video"
@@ -238,7 +319,45 @@ export const MeditationForm: React.FC = () => {
                     className="mt-1 block w-full"
                 />
                 {errors.video && <p className="mt-1 text-sm text-red-600">{errors.video}</p>}
-                <p className="mt-1 text-sm text-gray-500">Maximum file size: 100MB</p>
+                {videoDuration && <p className="mt-1 text-sm text-green-600">Detected duration: {videoDuration}</p>}
+                {(processing || uploadProgress > 0) && (
+                    <div className="mt-4 space-y-4">
+                        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                            <div className="mb-3 flex items-center justify-between text-sm">
+                                <span className="font-medium text-gray-700 dark:text-gray-300">Uploading video...</span>
+                                <span className="font-bold text-indigo-600 dark:text-indigo-400">{uploadProgress}%</span>
+                            </div>
+                            <div className="h-3 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                                <div
+                                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-300"
+                                    style={{ width: `${uploadProgress}%` }}
+                                />
+                            </div>
+                        </div>
+
+                        {uploadStats && (
+                            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                                <div className="grid gap-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">Chunk Progress:</span>
+                                        <span className="font-medium text-gray-900 dark:text-white">
+                                            {uploadStats.currentChunk} / {uploadStats.totalChunks}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">Upload Speed:</span>
+                                        <span className="font-medium text-gray-900 dark:text-white">{formatBytes(uploadStats.uploadSpeed)}/s</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">Time Remaining:</span>
+                                        <span className="font-medium text-gray-900 dark:text-white">{formatTime(uploadStats.timeRemaining)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+                <p className="mt-1 text-sm text-gray-500">Maximum file size: 1GB</p>
             </div>
 
             <div>
@@ -267,13 +386,6 @@ export const MeditationForm: React.FC = () => {
                     Feature this meditation
                 </Label>
             </div>
-
-            {processing && uploadProgress > 0 && (
-                <div className="mt-4 h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
-                    <div className="h-2.5 rounded-full bg-blue-600 transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
-                    <p className="mt-1 text-sm text-gray-600">Uploading: {uploadProgress}%</p>
-                </div>
-            )}
 
             <div className="flex items-center justify-end">
                 <PrimaryButton type="submit" disabled={processing}>

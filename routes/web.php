@@ -52,9 +52,11 @@ Route::middleware(['web', 'auth', AdminMiddleware::class])->prefix('admin')->nam
     Route::resource('meditations', AdminMeditationController::class);
 
     // Focus Content Management
+    Route::post('focus/upload-chunk', [AdminFocusController::class, 'uploadChunk'])->name('focus.upload-chunk');
     Route::delete('focus/{focusSession}/force', [AdminFocusController::class, 'forceDelete'])->name('focus.force-delete');
     Route::resource('focus', AdminFocusController::class);
 });
+
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

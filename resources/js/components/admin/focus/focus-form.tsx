@@ -3,7 +3,10 @@ import PrimaryButton from '@/components/primary-button';
 import SelectInput from '@/components/select-input';
 import TextInput from '@/components/text-input';
 import { useForm } from '@inertiajs/react';
-import React from 'react';
+import axios from 'axios';
+import { LoaderCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 
 type FormData = {
     title: string;
@@ -13,12 +16,18 @@ type FormData = {
     category: string;
     duration: string;
     audio: File | null;
+    audio_path?: string;
     image: File | null;
     is_featured: boolean;
 };
 
+type ChunkResponse = {
+    message: string;
+    path?: string;
+};
+
 export const FocusForm: React.FC = () => {
-    const { data, setData, post, processing, errors } = useForm<FormData>({
+    const { data, setData, errors, processing } = useForm<FormData>({
         title: '',
         description: '',
         type: '',
@@ -29,6 +38,9 @@ export const FocusForm: React.FC = () => {
         image: null,
         is_featured: false,
     });
+
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [isUploading, setIsUploading] = useState(false);
 
     const types = [
         { value: 'binaural', label: 'Binaural Beats' },
@@ -43,24 +55,201 @@ export const FocusForm: React.FC = () => {
         { value: 'soundscapes', label: 'Soundscapes' },
     ];
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('admin.focus.store'), {
-            forceFormData: true,
-        });
+        setIsUploading(true);
+        console.log('Form submission started', { formData: data });
+
+        try {
+            if (data.audio) {
+                console.log('Starting audio upload process', {
+                    fileName: data.audio.name,
+                    fileSize: data.audio.size,
+                });
+
+                const chunkSize = 1024 * 1024; // 1MB chunks
+                const chunks = Math.ceil(data.audio.size / chunkSize);
+                console.log('Chunk configuration', { chunkSize, totalChunks: chunks });
+                let uploadedPath = '';
+
+                const uploadChunk = async (chunk: number, retries = 3): Promise<ChunkResponse> => {
+                    try {
+                        const start = chunk * chunkSize;
+                        const end = Math.min(start + chunkSize, data.audio!.size);
+                        console.log('Uploading chunk', {
+                            chunkNumber: chunk,
+                            start,
+                            end,
+                            size: end - start,
+                        });
+
+                        const chunkBlob = data.audio!.slice(start, end);
+
+                        const formData = new FormData();
+                        formData.append('chunk', chunkBlob);
+                        formData.append('chunk_number', chunk.toString());
+                        formData.append('total_chunks', chunks.toString());
+                        formData.append('filename', data.audio!.name);
+
+                        const response = await axios.post<ChunkResponse>(route('admin.focus.upload-chunk'), formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                                Accept: 'application/json',
+                            },
+                            onUploadProgress: (progressEvent) => {
+                                const percentCompleteForChunk = (progressEvent.loaded / progressEvent.total!) * 100;
+                                const overallProgress = (chunk * 100 + percentCompleteForChunk) / chunks;
+                                setUploadProgress(Math.round(overallProgress));
+                                console.log('Upload progress', {
+                                    chunkProgress: percentCompleteForChunk,
+                                    overallProgress: Math.round(overallProgress),
+                                });
+                            },
+                        });
+
+                        console.log('Chunk upload response', response.data);
+                        return response.data;
+                    } catch (error) {
+                        console.error('Chunk upload error', {
+                            chunk,
+                            retries,
+                            error: axios.isAxiosError(error)
+                                ? {
+                                      status: error.response?.status,
+                                      message: error.message,
+                                      data: error.response?.data,
+                                  }
+                                : error,
+                        });
+
+                        if (retries > 0 && axios.isAxiosError(error) && error.response?.status === 413) {
+                            console.log('Retrying chunk upload after delay');
+                            await new Promise((resolve) => setTimeout(resolve, 1000));
+                            return uploadChunk(chunk, retries - 1);
+                        }
+                        throw error;
+                    }
+                };
+
+                // Upload chunks sequentially
+                for (let i = 0; i < chunks; i++) {
+                    try {
+                        const response = await uploadChunk(i);
+                        if (response.path) {
+                            uploadedPath = response.path;
+                            console.log('Received file path from server', { uploadedPath });
+                        }
+                        toast.info(`Uploading: ${Math.round(((i + 1) / chunks) * 100)}%`, {
+                            description: `Chunk ${i + 1} of ${chunks}`,
+                        });
+                    } catch (error) {
+                        console.error('Failed to upload chunk', {
+                            chunkNumber: i,
+                            error: axios.isAxiosError(error)
+                                ? {
+                                      status: error.response?.status,
+                                      message: error.message,
+                                      data: error.response?.data,
+                                  }
+                                : error,
+                        });
+                        if (axios.isAxiosError(error) && error.response?.status === 413) {
+                            toast.error('Upload failed: File chunk too large');
+                        } else {
+                            toast.error(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                        }
+                        setUploadProgress(0);
+                        setIsUploading(false);
+                        return;
+                    }
+                }
+
+                console.log('All chunks uploaded successfully');
+
+                // After successful upload, submit the form with the file path
+                try {
+                    const submitFormData = new FormData();
+
+                    // Add all text fields
+                    submitFormData.append('title', data.title);
+                    submitFormData.append('description', data.description);
+                    submitFormData.append('type', data.type);
+                    submitFormData.append('section', data.section);
+                    submitFormData.append('category', data.category);
+                    submitFormData.append('duration', data.duration);
+                    submitFormData.append('is_featured', data.is_featured ? '1' : '0');
+                    submitFormData.append('audio_path', uploadedPath);
+
+                    // Only append image if it exists
+                    if (data.image) {
+                        submitFormData.append('image', data.image);
+                    }
+
+                    console.log('Submitting final form', {
+                        entries: Array.from(submitFormData.entries()).map(([key, value]) => ({
+                            key,
+                            value: value instanceof File ? `File: ${value.name}` : value,
+                        })),
+                    });
+
+                    await axios.post(route('admin.focus.store'), submitFormData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                            Accept: 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+
+                    console.log('Form submitted successfully');
+                    toast.success('Focus audio created successfully');
+
+                    // Reset form state
+                    setUploadProgress(0);
+                    setIsUploading(false);
+
+                    // Redirect to index page
+                    window.location.href = route('admin.focus.index');
+                } catch (error) {
+                    console.error('Form submission failed', {
+                        error: axios.isAxiosError(error)
+                            ? {
+                                  status: error.response?.status,
+                                  message: error.message,
+                                  data: error.response?.data,
+                              }
+                            : error,
+                    });
+                    throw error;
+                }
+            }
+        } catch (error) {
+            console.error('Form submission error', {
+                error: axios.isAxiosError(error)
+                    ? {
+                          status: error.response?.status,
+                          message: error.message,
+                          data: error.response?.data,
+                      }
+                    : error,
+            });
+            toast.error(`Failed to upload file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            setUploadProgress(0);
+            setIsUploading(false);
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof Pick<FormData, 'audio' | 'image'>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // Show warning if file is too large
             if (field === 'audio' && file.size > 500 * 1024 * 1024) {
-                // 500MB warning
-                alert('Warning: Audio file size exceeds 500MB limit');
+                toast.error('Audio file size exceeds 500MB limit');
+                e.target.value = '';
+                return;
             }
             if (field === 'image' && file.size > 2 * 1024 * 1024) {
-                // 2MB warning
-                alert('Warning: Image file size exceeds 2MB limit');
+                toast.error('Image file size exceeds 2MB limit');
+                e.target.value = '';
+                return;
             }
             setData(field, file);
         }
@@ -150,6 +339,17 @@ export const FocusForm: React.FC = () => {
                     className="mt-1 block w-full"
                 />
                 {errors.audio && <p className="mt-1 text-sm text-red-600">{errors.audio}</p>}
+                {uploadProgress > 0 && (
+                    <div className="mt-2">
+                        <div className="h-2 w-full rounded-full bg-gray-200">
+                            <div
+                                className="h-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all"
+                                style={{ width: `${uploadProgress}%` }}
+                            />
+                        </div>
+                        <p className="mt-1 text-sm text-gray-600">Uploading: {uploadProgress}%</p>
+                    </div>
+                )}
                 <p className="mt-1 text-sm text-gray-500">Maximum file size: 500MB</p>
             </div>
 
@@ -168,7 +368,8 @@ export const FocusForm: React.FC = () => {
             </div>
 
             <div className="flex items-center justify-end">
-                <PrimaryButton type="submit" disabled={processing}>
+                <PrimaryButton type="submit" disabled={processing || isUploading}>
+                    {(processing || isUploading) && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                     Create Focus Content
                 </PrimaryButton>
             </div>
