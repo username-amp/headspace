@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import AdminLayout from '@/layouts/admin-layout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { Clock, Music2, Plus, Tag, Activity, Headphones, Radio, FileAudio } from 'lucide-react';
+import { Activity, Clock, FileAudio, Headphones, Music2, Radio, Tag } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -30,33 +30,12 @@ interface FocusIndexProps {
 
 const FocusIndex: React.FC<FocusIndexProps> = ({ focusSessions }) => {
     const { delete: destroy } = useForm();
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [forceDeleteModalOpen, setForceDeleteModalOpen] = useState(false);
     const [selectedSession, setSelectedSession] = useState<FocusSession | null>(null);
-
-    const handleDelete = (session: FocusSession) => {
-        setSelectedSession(session);
-        setDeleteModalOpen(true);
-    };
 
     const handleForceDelete = (session: FocusSession) => {
         setSelectedSession(session);
         setForceDeleteModalOpen(true);
-    };
-
-    const confirmDelete = () => {
-        if (!selectedSession) return;
-
-        destroy(route('admin.focus.destroy', selectedSession.id), {
-            onSuccess: () => {
-                toast.success('Focus audio deleted successfully');
-                setDeleteModalOpen(false);
-            },
-            onError: () => {
-                toast.error('Failed to delete focus audio');
-                setDeleteModalOpen(false);
-            },
-        });
     };
 
     const confirmForceDelete = () => {
@@ -136,13 +115,19 @@ const FocusIndex: React.FC<FocusIndexProps> = ({ focusSessions }) => {
                                 return (
                                     <Card key={session.id} className="group overflow-hidden transition-all hover:shadow-lg">
                                         <div className="relative aspect-video">
-                                            <img src={session.image_url} alt={session.title} className="absolute inset-0 h-full w-full object-cover" />
+                                            <img
+                                                src={session.image_url}
+                                                alt={session.title}
+                                                className="absolute inset-0 h-full w-full object-cover"
+                                            />
                                             {session.is_featured && (
                                                 <div className="absolute top-2 right-2 rounded bg-gradient-to-r from-blue-500 to-purple-500 px-2 py-1 text-sm text-white">
                                                     Featured
                                                 </div>
                                             )}
-                                            <div className={`absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity group-hover:bg-black/60`}>
+                                            <div
+                                                className={`absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity group-hover:bg-black/60`}
+                                            >
                                                 <div className={`rounded-full p-3 ${colorClass}`}>
                                                     <Icon className="h-12 w-12" />
                                                 </div>
@@ -170,21 +155,13 @@ const FocusIndex: React.FC<FocusIndexProps> = ({ focusSessions }) => {
                                                         Edit
                                                     </Button>
                                                 </Link>
-                                                <Button 
-                                                    variant="destructive" 
-                                                    size="sm" 
-                                                    onClick={() => handleDelete(session)}
-                                                    className="hover:bg-red-600"
-                                                >
-                                                    Delete
-                                                </Button>
-                                                <Button 
-                                                    variant="destructive" 
-                                                    size="sm" 
+                                                <Button
+                                                    variant="destructive"
+                                                    size="sm"
                                                     onClick={() => handleForceDelete(session)}
                                                     className="bg-red-700 hover:bg-red-800"
                                                 >
-                                                    Force Delete
+                                                    Delete
                                                 </Button>
                                             </div>
                                         </CardContent>
@@ -204,8 +181,8 @@ const FocusIndex: React.FC<FocusIndexProps> = ({ focusSessions }) => {
                                     key={page}
                                     href={route('admin.focus.index', { page })}
                                     className={`rounded px-4 py-2 transition-colors ${
-                                        page === focusSessions.current_page 
-                                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' 
+                                        page === focusSessions.current_page
+                                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
                                             : 'bg-card hover:bg-accent'
                                     }`}
                                 >
@@ -215,15 +192,6 @@ const FocusIndex: React.FC<FocusIndexProps> = ({ focusSessions }) => {
                         </div>
                     </div>
                 )}
-
-                {/* Delete Confirmation Modal */}
-                <ConfirmationModal
-                    isOpen={deleteModalOpen}
-                    onClose={() => setDeleteModalOpen(false)}
-                    onConfirm={confirmDelete}
-                    title="Delete Focus Audio"
-                    description="Are you sure you want to delete this focus audio? This will temporarily remove it from the platform. Users' progress will be preserved."
-                />
 
                 {/* Force Delete Confirmation Modal */}
                 <ConfirmationModal

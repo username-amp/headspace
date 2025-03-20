@@ -21,12 +21,12 @@ export default function VerifyEmail({ status }: { status?: string }) {
                 <div className="flex flex-col items-center gap-6 text-center">
                     <div className="flex flex-col items-center gap-2">
                         <div className="relative">
-                            <div className="absolute inset-0 animate-pulse rounded-full bg-indigo-500/20 blur-xl" />
-                            <div className="relative rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 p-4">
+                            <div className="absolute inset-0 animate-pulse rounded-full bg-amber-500/20 blur-xl" />
+                            <div className="relative rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 p-4">
                                 <Mail className="h-8 w-8 text-white" />
                             </div>
                         </div>
-                        <h1 className="bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-2xl font-bold text-transparent">
+                        <h1 className="bg-gradient-to-r from-amber-500 to-yellow-600 bg-clip-text text-2xl font-bold text-transparent">
                             Verify Your Email
                         </h1>
                     </div>
@@ -46,7 +46,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
                     <div className="space-y-4">
                         <Button
                             type="submit"
-                            className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white transition-all hover:from-indigo-600 hover:to-purple-700"
+                            className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 text-white transition-all hover:from-amber-600 hover:to-yellow-700"
                             disabled={processing}
                         >
                             {processing && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}

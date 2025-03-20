@@ -61,7 +61,7 @@ export function AppHeader({ className }: AppHeaderProps) {
                             <AppLogo />
                         </div>
                     </div>
-                    <span className="bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-lg font-semibold text-transparent">
+                    <span className="bg-gradient-to-r from-amber-500 to-yellow-600 bg-clip-text text-lg font-semibold text-transparent">
                         Headspace
                     </span>
                 </Link>
@@ -84,7 +84,7 @@ export function AppHeader({ className }: AppHeaderProps) {
                                     {item.label}
                                     {isActive && (
                                         <span
-                                            className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-violet-500 to-purple-600"
+                                            className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-amber-500 to-yellow-600"
                                             style={{
                                                 transform: 'scaleX(1)',
                                                 transition: 'transform 0.2s ease-in-out',
@@ -104,11 +104,11 @@ export function AppHeader({ className }: AppHeaderProps) {
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="hidden items-center gap-2 transition-transform hover:scale-105 hover:text-yellow-500 md:flex"
+                            className="hidden items-center gap-2 transition-transform hover:scale-105 hover:text-amber-500 md:flex"
                             asChild
                         >
                             <Link href="/admin">
-                                <Sparkles className="h-4 w-4 text-yellow-500" />
+                                <Sparkles className="h-4 w-4 text-amber-500" />
                                 <span>Admin</span>
                             </Link>
                         </Button>
@@ -125,9 +125,9 @@ export function AppHeader({ className }: AppHeaderProps) {
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="group relative size-10 rounded-full p-1 transition-transform hover:scale-105">
                                 <div className="relative">
-                                    <Avatar className="size-8 overflow-hidden rounded-full ring-2 ring-indigo-500/20 transition-all duration-300 group-hover:ring-indigo-500/40">
+                                    <Avatar className="size-8 overflow-hidden rounded-full ring-2 ring-amber-500/20 transition-all duration-300 group-hover:ring-amber-500/40">
                                         <AvatarImage src={auth.user.avatar} alt={auth.user.name} />
-                                        <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                                        <AvatarFallback className="bg-gradient-to-br from-amber-500 to-yellow-600 text-white">
                                             {getInitials(auth.user.name)}
                                         </AvatarFallback>
                                     </Avatar>

@@ -1,31 +1,29 @@
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Slider } from '@/components/ui/slider';
 import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import { Head, Link } from '@inertiajs/react';
-import cn from 'classnames';
-import { Headphones, Music, PauseCircle, PlayCircle, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Slider } from '@radix-ui/react-slider';
+import axios from 'axios';
+import { Music, Pause, Play, PlayCircle, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface FocusItem {
     id: number;
     title: string;
     type: string;
     duration: string;
-    image?: string;
+    image: string;
     audio_url: string;
-    icon?: 'music' | 'meditation';
-}
-
-interface FocusSection {
-    title: string;
-    description?: string;
-    items: FocusItem[];
 }
 
 interface Props {
     featuredItems: FocusItem[];
-    sections: FocusSection[];
+    sections: {
+        title: string;
+        description?: string;
+        items: FocusItem[];
+    }[];
 }
 
 function AudioPlayer({ currentTrack, onNext, onPrevious }: { currentTrack: FocusItem | null; onNext: () => void; onPrevious: () => void }) {
@@ -38,19 +36,49 @@ function AudioPlayer({ currentTrack, onNext, onPrevious }: { currentTrack: Focus
     const [duration, setDuration] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
 
+    // Add activity tracking
+    const trackActivity = useCallback(
+        async (action: string, duration?: number) => {
+            if (!currentTrack) return;
+
+            try {
+                await axios.post(route('activity.track'), {
+                    trackable_type: 'App\\Models\\FocusSession',
+                    trackable_id: currentTrack.id,
+                    action,
+                    duration,
+                });
+            } catch (error) {
+                console.error('Failed to track activity:', error);
+            }
+        },
+        [currentTrack],
+    );
+
     useEffect(() => {
         if (currentTrack && audioRef.current) {
             audioRef.current.play();
             setIsPlaying(true);
+            trackActivity('play');
         }
-    }, [currentTrack]);
+    }, [currentTrack, trackActivity]);
+
+    useEffect(() => {
+        if (isPlaying) {
+            trackActivity('play');
+        } else {
+            trackActivity('pause');
+        }
+    }, [isPlaying, trackActivity]);
 
     const togglePlay = () => {
         if (audioRef.current) {
             if (isPlaying) {
                 audioRef.current.pause();
+                trackActivity('pause', Math.floor(audioRef.current.currentTime));
             } else {
                 audioRef.current.play();
+                trackActivity('play');
             }
             setIsPlaying(!isPlaying);
         }
@@ -107,7 +135,9 @@ function AudioPlayer({ currentTrack, onNext, onPrevious }: { currentTrack: Focus
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    if (!currentTrack) return null;
+    if (!currentTrack) {
+        return null;
+    }
 
     return (
         <div className="bg-background/80 fixed right-0 bottom-0 left-0 border-t backdrop-blur-lg">
@@ -164,7 +194,7 @@ function AudioPlayer({ currentTrack, onNext, onPrevious }: { currentTrack: Focus
                                 className="hover:bg-primary/10 hover:text-primary h-12 w-12 rounded-full"
                                 onClick={togglePlay}
                             >
-                                {isPlaying ? <PauseCircle className="h-8 w-8" /> : <PlayCircle className="h-8 w-8" />}
+                                {isPlaying ? <Pause className="h-8 w-8" /> : <Play className="h-8 w-8" />}
                             </Button>
                             <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary" onClick={onNext}>
                                 <SkipForward className="h-5 w-5" />
@@ -210,16 +240,14 @@ function FocusItem({
     allItems: FocusItem[];
     onSelect: (item: FocusItem, allItems: FocusItem[]) => void;
 }) {
-    const handleClick = (e: React.MouseEvent) => {
-        e.preventDefault();
-        onSelect(item, allItems);
-    };
-
     return (
         <Link
             href={`/music?track=${item.id}`}
             preserveScroll
-            onClick={handleClick}
+            onClick={(e) => {
+                e.preventDefault();
+                onSelect(item, allItems); // 'allItems' is now used in handleTrackSelect
+            }}
             className="group relative aspect-square overflow-hidden rounded-2xl bg-black/5 backdrop-blur-sm transition-transform hover:scale-[1.02]"
         >
             <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/60 to-transparent" />
@@ -253,9 +281,9 @@ function EmptyState() {
     return (
         <div className="flex h-[60vh] flex-col items-center justify-center text-center">
             <div className="relative mb-6">
-                <div className="absolute inset-0 animate-pulse rounded-full bg-indigo-500/20 blur-xl" />
-                <div className="relative rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 p-4">
-                    <Headphones className="h-12 w-12 text-white" />
+                <div className="absolute inset-0 animate-pulse rounded-full bg-amber-500/20 blur-xl" />
+                <div className="relative rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 p-4">
+                    <Music className="h-12 w-12 text-white" />
                 </div>
             </div>
             <h2 className="mb-2 text-2xl font-semibold text-slate-900 dark:text-white">Finding Your Focus...</h2>
@@ -263,9 +291,9 @@ function EmptyState() {
                 We're preparing some amazing focus sessions for you. Check back soon for a journey into deep concentration and productivity.
             </p>
             <div className="flex space-x-4">
-                <div className="h-2 w-2 animate-bounce rounded-full bg-indigo-500 [animation-delay:-0.3s]" />
-                <div className="h-2 w-2 animate-bounce rounded-full bg-indigo-500 [animation-delay:-0.15s]" />
-                <div className="h-2 w-2 animate-bounce rounded-full bg-indigo-500" />
+                <div className="h-2 w-2 animate-bounce rounded-full bg-amber-500 [animation-delay:-0.3s]" />
+                <div className="h-2 w-2 animate-bounce rounded-full bg-amber-500 [animation-delay:-0.15s]" />
+                <div className="h-2 w-2 animate-bounce rounded-full bg-amber-500" />
             </div>
         </div>
     );
@@ -273,16 +301,37 @@ function EmptyState() {
 
 export default function Focus({ featuredItems, sections }: Props) {
     const [currentTrack, setCurrentTrack] = useState<FocusItem | null>(null);
-    const [playlist, setPlaylist] = useState<FocusItem[]>([]);
-    const [currentIndex, setCurrentIndex] = useState(-1);
+    const [allItems, setAllItems] = useState<FocusItem[]>([]);
 
-    // Check if there are any items in featured or sections
-    const hasNoContent =
-        (!featuredItems || featuredItems.length === 0) &&
-        (!sections || sections.length === 0 || sections.every((section) => !section.items || section.items.length === 0));
+    useEffect(() => {
+        // Combine all items into a single array for playlist functionality
+        const items = [...featuredItems];
+        sections.forEach((section) => {
+            items.push(...section.items);
+        });
+        setAllItems(items);
+    }, [featuredItems, sections]);
 
-    // Show empty state if no content
-    if (hasNoContent) {
+    const handleTrackSelect = (track: FocusItem, items: FocusItem[]) => {
+        setAllItems(items);
+        setCurrentTrack(track);
+    };
+
+    const handleNext = () => {
+        if (!currentTrack || !allItems.length) return;
+        const currentIndex = allItems.findIndex((item) => item.id === currentTrack.id);
+        const nextIndex = (currentIndex + 1) % allItems.length;
+        setCurrentTrack(allItems[nextIndex]);
+    };
+
+    const handlePrevious = () => {
+        if (!currentTrack || !allItems.length) return;
+        const currentIndex = allItems.findIndex((item) => item.id === currentTrack.id);
+        const previousIndex = (currentIndex - 1 + allItems.length) % allItems.length;
+        setCurrentTrack(allItems[previousIndex]);
+    };
+
+    if (allItems.length === 0) {
         return (
             <AppLayout>
                 <Head title="Focus" />
@@ -291,39 +340,13 @@ export default function Focus({ featuredItems, sections }: Props) {
         );
     }
 
-    // Get all items for playlist
-    const allItems = [...featuredItems, ...sections.flatMap((section) => section.items)];
-
-    const handleTrackSelect = (item: FocusItem, items: FocusItem[]) => {
-        setPlaylist(items);
-        const index = items.findIndex((track) => track.id === item.id);
-        setCurrentIndex(index);
-        setCurrentTrack(item);
-    };
-
-    const handleNext = () => {
-        if (currentIndex < playlist.length - 1) {
-            const nextIndex = currentIndex + 1;
-            setCurrentIndex(nextIndex);
-            setCurrentTrack(playlist[nextIndex]);
-        }
-    };
-
-    const handlePrevious = () => {
-        if (currentIndex > 0) {
-            const prevIndex = currentIndex - 1;
-            setCurrentIndex(prevIndex);
-            setCurrentTrack(playlist[prevIndex]);
-        }
-    };
-
     return (
         <AppLayout>
             <Head title="Focus" />
             <ScrollArea className="h-[calc(100vh-8rem)]">
-                <div className="space-y-8 pb-32">
-                    {/* Featured Section */}
-                    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 p-8 text-white">
+                <div className="space-y-8 pb-20">
+                    {/* Hero Section */}
+                    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500 via-yellow-500 to-amber-600 p-8 text-white">
                         <div className="relative z-10">
                             <h1 className="text-3xl font-bold">Focus Mode</h1>
                             <p className="mt-2 text-white/90">Enhance your concentration with curated ambient sounds</p>
@@ -334,7 +357,7 @@ export default function Focus({ featuredItems, sections }: Props) {
                             </div>
                         </div>
                         <div className="absolute top-0 right-0 h-64 w-64 translate-x-1/3 -translate-y-1/3 rounded-full bg-white/10 blur-3xl" />
-                        <div className="absolute bottom-0 left-0 h-32 w-32 -translate-x-1/2 translate-y-1/2 rounded-full bg-purple-300/20 blur-2xl" />
+                        <div className="absolute bottom-0 left-0 h-32 w-32 -translate-x-1/2 translate-y-1/2 rounded-full bg-yellow-300/20 blur-2xl" />
                     </section>
 
                     {/* Other Sections */}

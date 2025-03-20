@@ -1,10 +1,7 @@
 import { cn } from '@/lib/utils';
+import { Home, Music, Video } from 'lucide-react';
 import { Link } from '@inertiajs/react';
-import { Home, Video, Music } from 'lucide-react';
-import { useTheme } from '@/components/theme-provider';
-
-export function BottomNav() {
-    const { theme } = useTheme();
+export default function BottomNav() {
     const currentPath = window.location.pathname;
 
     const navItems = [
@@ -14,7 +11,7 @@ export function BottomNav() {
     ];
 
     return (
-        <div className="fixed right-0 bottom-0 left-0 z-50 border-t bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60">
+        <div className="bg-background/95 supports-[backdrop-filter]:bg-background/60 fixed right-0 bottom-0 left-0 z-50 border-t backdrop-blur-sm">
             <nav className="mx-auto flex max-w-md justify-around">
                 {navItems.map((item) => {
                     const isActive = currentPath === item.href;

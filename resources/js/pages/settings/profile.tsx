@@ -47,21 +47,21 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
             <SettingsLayout>
                 <div className="space-y-8">
                     {/* Header Section */}
-                    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 p-8 text-white shadow-xl">
+                    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500 via-yellow-500 to-amber-600 p-8 text-white shadow-xl">
                         <div className="relative z-10">
                             <div className="mb-4 inline-flex rounded-full bg-white/20 px-4 py-2 backdrop-blur-sm">
-                                <User className="mr-2 h-5 w-5 text-pink-300" />
+                                <User className="mr-2 h-5 w-5 text-amber-200" />
                                 <span className="text-sm font-medium">Your Profile</span>
                             </div>
                             <h1 className="text-3xl font-bold tracking-tight">Profile Settings</h1>
                             <p className="mt-2 max-w-md text-lg text-white/90">Manage your account information and email preferences.</p>
                         </div>
-                        <div className="absolute top-0 right-0 h-64 w-64 translate-x-1/3 -translate-y-1/3 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 opacity-50 blur-3xl" />
-                        <div className="absolute bottom-0 left-0 h-32 w-32 -translate-x-1/2 translate-y-1/2 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 opacity-50 blur-2xl" />
+                        <div className="absolute top-0 right-0 h-64 w-64 translate-x-1/3 -translate-y-1/3 rounded-full bg-gradient-to-br from-yellow-500 to-amber-500 opacity-50 blur-3xl" />
+                        <div className="absolute bottom-0 left-0 h-32 w-32 -translate-x-1/2 translate-y-1/2 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-500 opacity-50 blur-2xl" />
                     </div>
 
                     {/* Profile Form */}
-                    <Card className="hover:ring-offset-background overflow-hidden transition-all hover:ring-2 hover:ring-violet-500/30 hover:ring-offset-2">
+                    <Card className="hover:ring-offset-background overflow-hidden transition-all hover:ring-2 hover:ring-amber-500/30 hover:ring-offset-2">
                         <CardContent className="p-6">
                             <form onSubmit={submit} className="space-y-6">
                                 <div className="grid gap-6">
@@ -134,7 +134,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                                 <div className="flex items-center gap-4">
                                     <Button
                                         disabled={processing}
-                                        className="bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700"
+                                        className="bg-gradient-to-r from-amber-500 to-yellow-600 text-white hover:from-amber-600 hover:to-yellow-700"
                                     >
                                         Save Changes
                                     </Button>

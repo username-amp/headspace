@@ -1,9 +1,9 @@
+import AppLogo from '@/components/app-logo';
 import { type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { motion, useInView, useScroll, useSpring, useTransform } from 'framer-motion';
 import { ArrowRight, Heart, Leaf, Sparkles, Star, Sun, Users, type LucideIcon } from 'lucide-react';
 import { useRef } from 'react';
-import AppLogo from '@/components/app-logo';
 
 // Custom hook for scroll animations
 function useScrollAnimation(threshold = 0.2) {
@@ -48,10 +48,10 @@ function FeatureCard({ icon: Icon, title, description, index }: { icon: LucideIc
             <div className="relative z-10">
                 <div
                     className={`mb-6 inline-flex rounded-xl ${
-                        index === 0 ? 'bg-indigo-500/10' : index === 1 ? 'bg-purple-500/10' : 'bg-rose-500/10'
+                        index === 0 ? 'bg-amber-500/10' : index === 1 ? 'bg-yellow-500/10' : 'bg-amber-600/10'
                     } p-3`}
                 >
-                    <Icon className={`h-6 w-6 ${index === 0 ? 'text-indigo-600' : index === 1 ? 'text-purple-600' : 'text-rose-600'}`} />
+                    <Icon className={`h-6 w-6 ${index === 0 ? 'text-amber-600' : index === 1 ? 'text-yellow-600' : 'text-amber-700'}`} />
                 </div>
                 <h3 className="mb-3 text-xl font-semibold">{title}</h3>
                 <p className="text-gray-600">{description}</p>
@@ -73,7 +73,7 @@ function TestimonialCard({ content, author, role, image, index }: { content: str
             className="flex flex-col justify-between rounded-2xl bg-white p-8 shadow-md"
         >
             <div>
-                <div className="flex gap-0.5 text-indigo-500">
+                <div className="flex gap-0.5 text-amber-500">
                     {[...Array(5)].map((_, i) => (
                         <Star key={i} className="h-5 w-5 fill-current" />
                     ))}
@@ -162,7 +162,7 @@ export default function LandingPage() {
                                 <AppLogo />
                                 <Link
                                     href={route('home')}
-                                    className="bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-xl font-bold text-transparent"
+                                    className="bg-gradient-to-r from-amber-500 to-yellow-600 bg-clip-text text-xl font-bold text-transparent"
                                 >
                                     Headspace
                                 </Link>
@@ -186,7 +186,7 @@ export default function LandingPage() {
                             {auth.user ? (
                                 <Link
                                     href={route('dashboard')}
-                                    className="group flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-2 text-sm text-white transition-all hover:shadow-lg hover:shadow-indigo-500/25"
+                                    className="group flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-500 to-yellow-600 px-6 py-2 text-sm text-white transition-all hover:shadow-lg hover:shadow-amber-500/25"
                                 >
                                     Dashboard
                                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -198,7 +198,7 @@ export default function LandingPage() {
                                     </Link>
                                     <Link
                                         href={route('register')}
-                                        className="group flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-2 text-sm text-white transition-all hover:shadow-lg hover:shadow-indigo-500/25"
+                                        className="group flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-500 to-yellow-600 px-6 py-2 text-sm text-white transition-all hover:shadow-lg hover:shadow-indigo-500/25"
                                     >
                                         Get Started
                                         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -227,14 +227,14 @@ export default function LandingPage() {
                                 transition={{ duration: 0.8 }}
                                 className="max-w-2xl text-center lg:text-left"
                             >
-                                <div className="mb-6 inline-flex rounded-full bg-indigo-500/10 px-4 py-2">
-                                    <div className="flex items-center gap-2 text-sm font-medium text-indigo-600">
+                                <div className="mb-6 inline-flex rounded-full bg-amber-500/10 px-4 py-2">
+                                    <div className="flex items-center gap-2 text-sm font-medium text-amber-600">
                                         <Sparkles className="h-4 w-4" />
                                         <span>Your journey to mindfulness begins here</span>
                                     </div>
                                 </div>
                                 <h1 className="mb-6 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-5xl font-bold tracking-tight text-transparent sm:text-6xl">
-                                    Find Peace in a <span className="bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text">Chaotic World</span>
+                                    Find Peace in a <span className="bg-gradient-to-r from-amber-500 to-yellow-600 bg-clip-text">Chaotic World</span>
                                 </h1>
                                 <p className="mb-8 text-xl leading-relaxed text-gray-600">
                                     Discover tranquility through guided meditations, mindful exercises, and soothing sounds. Your daily companion for
@@ -245,7 +245,7 @@ export default function LandingPage() {
                                         <>
                                             <Link
                                                 href={route('register')}
-                                                className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 px-8 py-3 text-white transition-all hover:shadow-lg hover:shadow-indigo-500/25 sm:w-auto"
+                                                className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-500 to-yellow-600 px-8 py-3 text-white transition-all hover:shadow-lg hover:shadow-amber-500/25 sm:w-auto"
                                             >
                                                 Start Free Trial
                                                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -275,7 +275,7 @@ export default function LandingPage() {
                                     {auth.user && (
                                         <Link
                                             href={route('dashboard')}
-                                            className="group flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 px-8 py-3 text-white transition-all hover:shadow-lg hover:shadow-indigo-500/25 sm:w-auto"
+                                            className="group flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-amber-500 to-yellow-600 px-8 py-3 text-white transition-all hover:shadow-lg hover:shadow-amber-500/25 sm:w-auto"
                                         >
                                             Go to Dashboard
                                             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -294,7 +294,7 @@ export default function LandingPage() {
                                         <div className="h-full w-full rotate-6 rounded-3xl bg-gradient-to-r from-indigo-500 to-purple-600 opacity-30 blur-xl"></div>
                                     </div>
                                     <img
-                                        src="https://images.unsplash.com/photo-1588072432836-e10032774350?ixlib=rb-1.2.1&auto=format&fit=crop&w=1352&q=80"
+                                        src="https://cdn.tinybuddha.com/wp-content/uploads/2013/07/Meditating-1.jpg"
                                         alt="Meditation app interface"
                                         className="relative rounded-2xl shadow-xl transition duration-500 hover:scale-[1.01]"
                                     />
@@ -374,7 +374,7 @@ export default function LandingPage() {
                                         <div className="h-full w-full -rotate-6 rounded-3xl bg-gradient-to-r from-indigo-500 to-purple-600 opacity-30 blur-xl"></div>
                                     </div>
                                     <img
-                                        src="https://static.vecteezy.com/system/resources/thumbnails/022/799/016/small_2x/a-man-meditate-in-music-relaxation-meditation-generative-ai-photo.jpeg"
+                                        src="https://media.post.rvohealth.io/wp-content/uploads/sites/4/2022/03/264356-Meditation-for-Beginners_-A-Guide-1296x728-header-1024x576.jpg"
                                         alt="App interface"
                                         className="relative rounded-2xl shadow-xl transition duration-500 hover:scale-[1.01]"
                                     />
@@ -416,7 +416,7 @@ export default function LandingPage() {
                                 <div className="mt-8">
                                     <Link
                                         href={route('register')}
-                                        className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 px-8 py-3 text-white transition-all hover:shadow-lg hover:shadow-indigo-500/25"
+                                        className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-500 to-yellow-600 px-8 py-3 text-white transition-all hover:shadow-lg hover:shadow-amber-500/25"
                                     >
                                         Start Your Journey
                                         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -434,7 +434,7 @@ export default function LandingPage() {
                     viewport={{ once: true }}
                     transition={{ duration: 0.8 }}
                     id="contact"
-                    className="bg-gray-900 text-white"
+                    className="bg-gradient-to-b from-amber-50 to-yellow-100 dark:from-gray-900 dark:to-gray-800"
                 >
                     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
                         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">

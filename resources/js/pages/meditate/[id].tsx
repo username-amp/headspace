@@ -3,8 +3,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
+import axios from 'axios';
 import { ArrowLeft, Clock, Flower2, Forward, Heart, Pause, Play, Rewind, Tag, Volume2, VolumeX } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface MeditationSession {
     id: number;
@@ -14,7 +15,7 @@ interface MeditationSession {
     category: string;
     duration: string;
     image_url: string;
-    video_url: string;
+    video_url?: string;
     is_featured: boolean;
 }
 
@@ -34,18 +35,66 @@ export default function MeditateDetails({ meditation, relatedMeditations }: Prop
     const [isLiked, setIsLiked] = useState(false);
     const [showControls, setShowControls] = useState(false);
 
+    // Add activity tracking
+    const trackActivity = useCallback(
+        async (action: string, duration?: number) => {
+            try {
+                await axios.post(route('activity.track'), {
+                    trackable_type: 'App\\Models\\MeditationSession',
+                    trackable_id: meditation.id,
+                    action,
+                    duration,
+                });
+            } catch (error) {
+                console.error('Failed to track activity:', error);
+            }
+        },
+        [meditation.id],
+    );
+
     useEffect(() => {
-        if (videoRef.current) {
-            setDuration(videoRef.current.duration);
+        const video = videoRef.current;
+        if (video) {
+            const handleDuration = () => setDuration(video.duration);
+            video.addEventListener('loadedmetadata', handleDuration);
+            return () => video.removeEventListener('loadedmetadata', handleDuration);
         }
-    }, [videoRef.current]);
+    }, []);
+
+    useEffect(() => {
+        const video = videoRef.current;
+        if (video) {
+            video.currentTime = 0;
+        }
+    }, []);
+
+    useEffect(() => {
+        if (isPlaying) {
+            trackActivity('play');
+        } else {
+            trackActivity('pause');
+        }
+    }, [isPlaying, trackActivity]);
+
+    // Track view on component mount
+    useEffect(() => {
+        trackActivity('view');
+        // We can safely ignore the trackActivity dependency here since we only want this to run once
+        // and meditation.id won't change during the component's lifecycle
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const togglePlay = () => {
         if (videoRef.current) {
             if (isPlaying) {
                 videoRef.current.pause();
+                // Only track pause if we've watched some content
+                if (videoRef.current.currentTime > 0) {
+                    trackActivity('pause', Math.floor(videoRef.current.currentTime));
+                }
             } else {
                 videoRef.current.play();
+                trackActivity('play');
             }
             setIsPlaying(!isPlaying);
         }
@@ -125,81 +174,107 @@ export default function MeditateDetails({ meditation, relatedMeditations }: Prop
                                 onMouseEnter={() => setShowControls(true)}
                                 onMouseLeave={() => setShowControls(false)}
                             >
-                                <video
-                                    ref={videoRef}
-                                    src={meditation.video_url}
-                                    poster={meditation.image_url}
-                                    className="h-full w-full object-contain"
-                                    onTimeUpdate={handleTimeUpdate}
-                                    onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-                                    onEnded={() => setIsPlaying(false)}
-                                />
-
-                                {/* Video Controls */}
-                                <div
-                                    className={`absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 transition-opacity duration-300 ${
-                                        showControls || !isPlaying ? 'opacity-100' : 'opacity-0'
-                                    }`}
-                                >
-                                    {/* Progress Bar */}
-                                    <div className="mb-4">
-                                        <Slider
-                                            value={[progress]}
-                                            onValueChange={handleProgressChange}
-                                            max={100}
-                                            step={0.1}
-                                            className="cursor-pointer"
-                                        />
-                                        <div className="mt-2 flex justify-between text-xs text-white/80">
-                                            <span>{formatTime(currentTime)}</span>
-                                            <span>{formatTime(duration)}</span>
+                                {meditation.video_url ? (
+                                    <video
+                                        ref={videoRef}
+                                        src={meditation.video_url}
+                                        poster={meditation.image_url}
+                                        className="h-full w-full object-contain"
+                                        onTimeUpdate={handleTimeUpdate}
+                                        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+                                        onEnded={() => {
+                                            setIsPlaying(false);
+                                            // Track completion with final duration
+                                            if (videoRef.current) {
+                                                trackActivity('pause', Math.floor(videoRef.current.duration));
+                                            }
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="relative h-full w-full">
+                                        <img src={meditation.image_url} alt={meditation.title} className="h-full w-full object-cover" />
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                                            <p className="text-center text-white">
+                                                This meditation session is currently image-only.
+                                                <br />
+                                                Video content coming soon!
+                                            </p>
                                         </div>
                                     </div>
+                                )}
 
-                                    {/* Control Buttons */}
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-4">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 text-white hover:bg-white/20"
-                                                onClick={() => handleSkip(-10)}
-                                            >
-                                                <Rewind className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-12 w-12 rounded-full bg-white/10 text-white backdrop-blur-sm transition-transform hover:scale-105 hover:bg-white/20"
-                                                onClick={togglePlay}
-                                            >
-                                                {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 text-white hover:bg-white/20"
-                                                onClick={() => handleSkip(10)}
-                                            >
-                                                <Forward className="h-4 w-4" />
-                                            </Button>
+                                {/* Video Controls - Only show if video is available */}
+                                {meditation.video_url && (
+                                    <div
+                                        className={`absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 transition-opacity duration-300 ${
+                                            showControls || !isPlaying ? 'opacity-100' : 'opacity-0'
+                                        }`}
+                                    >
+                                        {/* Progress Bar */}
+                                        <div className="mb-4">
+                                            <Slider
+                                                value={[progress]}
+                                                onValueChange={handleProgressChange}
+                                                max={100}
+                                                step={0.1}
+                                                className="cursor-pointer"
+                                            />
+                                            <div className="mt-2 flex justify-between text-xs text-white/80">
+                                                <span>{formatTime(currentTime)}</span>
+                                                <span>{formatTime(duration)}</span>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20" onClick={toggleMute}>
-                                                {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                                            </Button>
-                                            <div className="w-24">
-                                                <Slider
-                                                    value={[isMuted ? 0 : volume]}
-                                                    onValueChange={handleVolumeChange}
-                                                    max={1}
-                                                    step={0.1}
-                                                    className="cursor-pointer"
-                                                />
+
+                                        {/* Control Buttons */}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-white hover:bg-white/20"
+                                                    onClick={() => handleSkip(-10)}
+                                                >
+                                                    <Rewind className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-12 w-12 rounded-full bg-white/10 text-white backdrop-blur-sm transition-transform hover:scale-105 hover:bg-white/20"
+                                                    onClick={togglePlay}
+                                                >
+                                                    {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-white hover:bg-white/20"
+                                                    onClick={() => handleSkip(10)}
+                                                >
+                                                    <Forward className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-white hover:bg-white/20"
+                                                    onClick={toggleMute}
+                                                >
+                                                    {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                                                </Button>
+                                                <div className="w-24">
+                                                    <Slider
+                                                        value={[isMuted ? 0 : volume]}
+                                                        onValueChange={handleVolumeChange}
+                                                        max={1}
+                                                        step={0.1}
+                                                        className="cursor-pointer"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
 
                             {/* Meditation Details */}

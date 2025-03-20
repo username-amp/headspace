@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import AdminLayout from '@/layouts/admin-layout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { Clock, PlayCircle, Plus, Tag, Video, Activity, FileVideo } from 'lucide-react';
+import { Activity, Clock, FileVideo, PlayCircle, Tag, Video } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -140,7 +140,9 @@ const MeditationIndex: React.FC<MeditationIndexProps> = ({ meditationSessions })
                                                 Featured
                                             </div>
                                         )}
-                                        <div className={`absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity group-hover:bg-black/60`}>
+                                        <div
+                                            className={`absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity group-hover:bg-black/60`}
+                                        >
                                             <div className={`rounded-full p-3 ${sectionColors[session.section as keyof typeof sectionColors]}`}>
                                                 <PlayCircle className="h-12 w-12" />
                                             </div>
@@ -172,17 +174,17 @@ const MeditationIndex: React.FC<MeditationIndexProps> = ({ meditationSessions })
                                                     Edit
                                                 </Button>
                                             </Link>
-                                            <Button 
-                                                variant="destructive" 
-                                                size="sm" 
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
                                                 onClick={() => handleDelete(session)}
                                                 className="hover:bg-red-600"
                                             >
                                                 Delete
                                             </Button>
-                                            <Button 
-                                                variant="destructive" 
-                                                size="sm" 
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
                                                 onClick={() => handleForceDelete(session)}
                                                 className="bg-red-700 hover:bg-red-800"
                                             >
@@ -205,8 +207,8 @@ const MeditationIndex: React.FC<MeditationIndexProps> = ({ meditationSessions })
                                     key={page}
                                     href={route('admin.meditations.index', { page })}
                                     className={`rounded px-4 py-2 transition-colors ${
-                                        page === meditationSessions.current_page 
-                                            ? 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white' 
+                                        page === meditationSessions.current_page
+                                            ? 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white'
                                             : 'bg-card hover:bg-accent'
                                     }`}
                                 >

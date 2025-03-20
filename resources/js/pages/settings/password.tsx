@@ -55,21 +55,21 @@ export default function Password() {
             <SettingsLayout>
                 <div className="space-y-8">
                     {/* Header Section */}
-                    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 p-8 text-white shadow-xl">
+                    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500 via-yellow-500 to-amber-600 p-8 text-white shadow-xl">
                         <div className="relative z-10">
                             <div className="mb-4 inline-flex rounded-full bg-white/20 px-4 py-2 backdrop-blur-sm">
-                                <Shield className="mr-2 h-5 w-5 text-pink-300" />
+                                <Shield className="mr-2 h-5 w-5 text-amber-200" />
                                 <span className="text-sm font-medium">Security First</span>
                             </div>
                             <h1 className="text-3xl font-bold tracking-tight">Update Password</h1>
                             <p className="mt-2 max-w-md text-lg text-white/90">Keep your account secure with a strong, unique password.</p>
                         </div>
-                        <div className="absolute top-0 right-0 h-64 w-64 translate-x-1/3 -translate-y-1/3 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 opacity-50 blur-3xl" />
-                        <div className="absolute bottom-0 left-0 h-32 w-32 -translate-x-1/2 translate-y-1/2 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 opacity-50 blur-2xl" />
+                        <div className="absolute top-0 right-0 h-64 w-64 translate-x-1/3 -translate-y-1/3 rounded-full bg-gradient-to-br from-yellow-500 to-amber-500 opacity-50 blur-3xl" />
+                        <div className="absolute bottom-0 left-0 h-32 w-32 -translate-x-1/2 translate-y-1/2 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-500 opacity-50 blur-2xl" />
                     </div>
 
                     {/* Password Form */}
-                    <Card className="hover:ring-offset-background overflow-hidden transition-all hover:ring-2 hover:ring-violet-500/30 hover:ring-offset-2">
+                    <Card className="hover:ring-offset-background overflow-hidden transition-all hover:ring-2 hover:ring-amber-500/30 hover:ring-offset-2">
                         <CardContent className="p-6">
                             <form onSubmit={updatePassword} className="space-y-6">
                                 <div className="grid gap-6">
@@ -110,6 +110,16 @@ export default function Password() {
                                             />
                                             <Shield className="text-muted-foreground absolute top-2.5 left-3 h-5 w-5" />
                                         </div>
+                                        <div className="text-muted-foreground space-y-1 text-sm">
+                                            <p>Password must:</p>
+                                            <ul className="list-inside list-disc space-y-1">
+                                                <li>Be at least 8 characters long</li>
+                                                <li>Include uppercase and lowercase letters</li>
+                                                <li>Include at least one number</li>
+                                                <li>Include at least one special character</li>
+                                                <li>Be different from your current password</li>
+                                            </ul>
+                                        </div>
                                         <InputError message={errors.password} />
                                     </div>
 
@@ -136,7 +146,7 @@ export default function Password() {
                                 <div className="flex items-center gap-4">
                                     <Button
                                         disabled={processing}
-                                        className="bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700"
+                                        className="bg-gradient-to-r from-amber-500 to-yellow-600 text-white hover:from-amber-600 hover:to-yellow-700"
                                     >
                                         Update Password
                                     </Button>

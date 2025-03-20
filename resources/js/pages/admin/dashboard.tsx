@@ -1,11 +1,9 @@
-import { BarChart, LineChart } from '@/components/charts';
-import { NavMenu } from '@/components/navigation/nav-menu';
+import {  LineChart } from '@/components/charts';
 import { Card, CardContent } from '@/components/ui/card';
-import { StatCard } from '@/components/ui/stat-card';
-import { BaseLayout } from '@/layouts/base-layout';
+
 import AdminLayout from '@/layouts/admin-layout';
 import { Head } from '@inertiajs/react';
-import { Video, Music, Activity, TrendingUp, Check, Clock, Users, BookOpen, Headphones, Waves, Radio } from 'lucide-react';
+import { Video, Music, Check, Clock, Users, BookOpen, Headphones, Waves, Radio } from 'lucide-react';
 import React from 'react';
 
 interface DashboardProps {
@@ -58,11 +56,6 @@ const Dashboard: React.FC<DashboardProps> = ({
     userActivity = {},
     mostActiveUsers = [] 
 }) => {
-    const Header = (
-        <div className="flex h-16 items-center gap-6 border-b px-6">
-            <h1 className="text-xl font-semibold">Admin Dashboard</h1>
-        </div>
-    );
 
     // Performance metrics based on actual content completion rates
     const performanceCards = [

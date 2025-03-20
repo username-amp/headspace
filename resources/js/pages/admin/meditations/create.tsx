@@ -3,18 +3,7 @@ import AdminLayout from '@/layouts/admin-layout';
 import { Head } from '@inertiajs/react';
 import React from 'react';
 
-interface Props {
-    sections: {
-        featured: string;
-        today: string;
-        new_popular: string;
-        quick: string;
-        courses: string;
-        singles: string;
-    };
-}
-
-export default function CreateMeditation({ sections }: Props) {
+export default function CreateMeditation() {
     return (
         <>
             <Head title="Create Meditation" />

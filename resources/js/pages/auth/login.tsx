@@ -44,12 +44,12 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         <div className="flex flex-col items-center gap-6 text-center">
                             <Link href={route('home')} className="group flex flex-col items-center gap-2 transition-transform hover:scale-105">
                                 <div className="relative">
-                                    <div className="absolute inset-0 animate-pulse rounded-full bg-indigo-500/20 blur-xl" />
-                                    <div className="relative rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 p-4">
+                                    <div className="absolute inset-0 animate-pulse rounded-full bg-amber-500/20 blur-xl" />
+                                    <div className="relative rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 p-4">
                                         <AppLogoIcon className="h-8 w-8 text-white" />
                                     </div>
                                 </div>
-                                <span className="bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-2xl font-bold text-transparent">
+                                <span className="bg-gradient-to-r from-amber-500 to-yellow-600 bg-clip-text text-2xl font-bold text-transparent">
                                     Welcome Back
                                 </span>
                             </Link>
@@ -88,7 +88,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                     <div className="flex items-center justify-between">
                                         <Label htmlFor="password">Password</Label>
                                         {canResetPassword && (
-                                            <TextLink href={route('password.request')} className="text-sm hover:text-indigo-600" tabIndex={5}>
+                                            <TextLink href={route('password.request')} className="text-sm hover:text-amber-600" tabIndex={5}>
                                                 Forgot password?
                                             </TextLink>
                                         )}
@@ -125,7 +125,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
                             <Button
                                 type="submit"
-                                className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white transition-all hover:from-indigo-600 hover:to-purple-700"
+                                className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 text-white transition-all hover:from-amber-600 hover:to-yellow-700"
                                 tabIndex={4}
                                 disabled={processing}
                             >
@@ -136,7 +136,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
                         <p className="text-muted-foreground text-center text-sm">
                             Don't have an account?{' '}
-                            <TextLink href={route('register')} tabIndex={5} className="hover:text-indigo-600">
+                            <TextLink href={route('register')} tabIndex={5} className="hover:text-amber-600">
                                 Sign up
                             </TextLink>
                         </p>
@@ -146,14 +146,14 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                 {/* Right Side - Image Section */}
                 <div className="hidden md:block md:w-1/2">
                     <div className="relative h-full w-full">
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/90 to-purple-600/90" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/90 to-yellow-600/90" />
                         <img
                             src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b"
                             alt="Meditation"
                             className="h-full w-full object-cover"
                         />
                         <div className="absolute inset-0 flex items-center justify-center p-8">
-                            <blockquote className="space-y-4">
+                            <blockquote className="space-y-4 rounded-2xl bg-black/10 p-8 backdrop-blur-sm">
                                 <p className="text-2xl font-medium text-balance text-white">
                                     "Meditation is not about stopping thoughts, but recognizing that we are more than our thoughts and our feelings."
                                 </p>

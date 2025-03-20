@@ -48,6 +48,11 @@ class MeditationSession extends Model
         return $query->where('category', $category);
     }
 
+    public function activities()
+    {
+        return $this->morphMany(UserActivity::class, 'trackable');
+    }
+
     protected static function boot()
     {
         parent::boot();

@@ -3,16 +3,7 @@ import AdminLayout from '@/layouts/admin-layout';
 import { Head } from '@inertiajs/react';
 import React from 'react';
 
-interface Props {
-    sections: {
-        featured: string;
-        binaural_beats: string;
-        focus_music: string;
-        soundscapes: string;
-    };
-}
-
-export default function CreateFocus({ sections }: Props) {
+export default function CreateFocus() {
     return (
         <>
             <Head title="Create Focus Content" />

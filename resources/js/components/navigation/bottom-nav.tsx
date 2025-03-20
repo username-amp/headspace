@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { Link } from '@inertiajs/react';
-import { Brain, Compass, Home, Video, Music } from 'lucide-react';
+import { Home, Music, Video } from 'lucide-react';
 import React from 'react';
 
 interface BottomNavItemProps {

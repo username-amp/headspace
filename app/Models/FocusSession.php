@@ -42,6 +42,11 @@ class FocusSession extends Model
         return $this->hasMany(UserProgress::class);
     }
 
+    public function activities()
+    {
+        return $this->morphMany(UserActivity::class, 'trackable');
+    }
+
     protected static function boot()
     {
         parent::boot();

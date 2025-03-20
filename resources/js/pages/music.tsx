@@ -1,10 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
-import { Music, PlayCircle, PauseCircle, Repeat } from 'lucide-react';
-import React, { useRef, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { Head } from '@inertiajs/react';
+import { Music, PauseCircle, PlayCircle, Repeat } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Track {
     id: number;
@@ -36,12 +36,12 @@ export default function MusicPage({ tracks, track }: Props) {
         const savedIsLooping = localStorage.getItem('isLooping');
 
         if (track) {
-            const selectedTrack = tracks.find(t => t.id === parseInt(track));
+            const selectedTrack = tracks.find((t) => t.id === parseInt(track));
             if (selectedTrack) {
                 setCurrentTrack(selectedTrack);
             }
         } else if (savedTrackId) {
-            const savedTrack = tracks.find(t => t.id === parseInt(savedTrackId));
+            const savedTrack = tracks.find((t) => t.id === parseInt(savedTrackId));
             if (savedTrack) {
                 setCurrentTrack(savedTrack);
                 if (savedProgress) {
@@ -97,13 +97,14 @@ export default function MusicPage({ tracks, track }: Props) {
 
     // Restore playback position
     useEffect(() => {
-        if (currentTrack && audioRef.current && progress > 0 && !isNaN(audioRef.current.duration) && isFinite(audioRef.current.duration)) {
-            const time = (progress / 100) * audioRef.current.duration;
+        const audio = audioRef.current;
+        if (currentTrack && audio && !isNaN(audio.duration) && isFinite(audio.duration)) {
+            const time = (progress / 100) * audio.duration;
             if (isFinite(time)) {
-                audioRef.current.currentTime = time;
+                audio.currentTime = time;
             }
         }
-    }, [currentTrack, duration]);
+    }, [currentTrack, progress]);
 
     const handleTrackClick = (track: Track) => {
         if (currentTrack?.id === track.id) {
@@ -171,9 +172,9 @@ export default function MusicPage({ tracks, track }: Props) {
     return (
         <AppLayout>
             <Head title="Music Player" />
-            
+
             <div className="container py-6">
-                <div className="flex items-center justify-between mb-6">
+                <div className="mb-6 flex items-center justify-between">
                     <h1 className="text-4xl font-bold">Music Player</h1>
                 </div>
 
@@ -183,27 +184,27 @@ export default function MusicPage({ tracks, track }: Props) {
                             key={track.id}
                             onClick={() => handleTrackClick(track)}
                             className={cn(
-                                "p-4 rounded-lg border cursor-pointer transition-colors",
-                                "hover:bg-primary/5",
-                                currentTrack?.id === track.id && "bg-primary/10 border-primary"
+                                'cursor-pointer rounded-lg border p-4 transition-colors',
+                                'hover:bg-primary/5',
+                                currentTrack?.id === track.id && 'bg-primary/10 border-primary',
                             )}
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-4">
-                                    <div className={cn(
-                                        "p-2 rounded-lg",
-                                        currentTrack?.id === track.id ? "bg-primary text-primary-foreground" : "bg-muted"
-                                    )}>
+                                    <div
+                                        className={cn(
+                                            'rounded-lg p-2',
+                                            currentTrack?.id === track.id ? 'bg-primary text-primary-foreground' : 'bg-muted',
+                                        )}
+                                    >
                                         <Music className="h-6 w-6" />
                                     </div>
                                     <div>
                                         <h3 className="font-medium">{track.title}</h3>
-                                        <p className="text-sm text-muted-foreground">{track.type}</p>
+                                        <p className="text-muted-foreground text-sm">{track.type}</p>
                                     </div>
                                 </div>
-                                <div className="text-sm text-muted-foreground">
-                                    {formatTime(track.duration)}
-                                </div>
+                                <div className="text-muted-foreground text-sm">{formatTime(track.duration)}</div>
                             </div>
                         </div>
                     ))}
@@ -212,7 +213,7 @@ export default function MusicPage({ tracks, track }: Props) {
 
             {/* Persistent Player */}
             {currentTrack && (
-                <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-lg border-t">
+                <div className="bg-background/80 fixed right-0 bottom-0 left-0 border-t backdrop-blur-lg">
                     <div className="container mx-auto p-4">
                         <audio
                             ref={audioRef}
@@ -222,21 +223,21 @@ export default function MusicPage({ tracks, track }: Props) {
                             loop={isLooping}
                             onEnded={() => !isLooping && setIsPlaying(false)}
                         />
-                        
+
                         {/* Track Info */}
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="mb-4 flex items-center justify-between">
                             <div className="flex items-center space-x-4">
-                                <div className="bg-primary text-primary-foreground p-2 rounded-lg">
+                                <div className="bg-primary text-primary-foreground rounded-lg p-2">
                                     <Music className="h-6 w-6" />
                                 </div>
                                 <div>
                                     <h3 className="font-medium">{currentTrack.title}</h3>
-                                    <p className="text-sm text-muted-foreground">{currentTrack.type}</p>
+                                    <p className="text-muted-foreground text-sm">{currentTrack.type}</p>
                                 </div>
                             </div>
-                            
+
                             {/* Time */}
-                            <div className="text-sm text-muted-foreground">
+                            <div className="text-muted-foreground text-sm">
                                 {formatTime(currentTime)} / {formatTime(duration)}
                             </div>
                         </div>
@@ -244,37 +245,24 @@ export default function MusicPage({ tracks, track }: Props) {
                         {/* Controls */}
                         <div className="flex flex-col space-y-4">
                             {/* Progress Bar */}
-                            <Slider
-                                value={[progress]}
-                                onValueChange={handleProgressChange}
-                                max={100}
-                                step={0.1}
-                                className="w-full"
-                            />
+                            <Slider value={[progress]} onValueChange={handleProgressChange} max={100} step={0.1} className="w-full" />
 
                             <div className="flex items-center justify-center space-x-4">
                                 {/* Play/Pause Button */}
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-12 w-12 rounded-full hover:bg-primary/10 hover:text-primary"
+                                    className="hover:bg-primary/10 hover:text-primary h-12 w-12 rounded-full"
                                     onClick={togglePlay}
                                 >
-                                    {isPlaying ? (
-                                        <PauseCircle className="h-8 w-8" />
-                                    ) : (
-                                        <PlayCircle className="h-8 w-8" />
-                                    )}
+                                    {isPlaying ? <PauseCircle className="h-8 w-8" /> : <PlayCircle className="h-8 w-8" />}
                                 </Button>
 
                                 {/* Repeat Button */}
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className={cn(
-                                        "hover:bg-primary/10 hover:text-primary",
-                                        isLooping && "text-primary bg-primary/10"
-                                    )}
+                                    className={cn('hover:bg-primary/10 hover:text-primary', isLooping && 'text-primary bg-primary/10')}
                                     onClick={toggleRepeat}
                                 >
                                     <Repeat className="h-5 w-5" />

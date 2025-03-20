@@ -8,6 +8,7 @@ use App\Http\Controllers\FocusController;
 use App\Http\Controllers\MeditateController;
 use App\Http\Controllers\MusicController;
 use App\Http\Controllers\Settings\AppearanceController;
+use App\Http\Controllers\ActivityController;
 use App\Http\Middleware\AdminMiddleware;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -34,6 +35,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/appearance', [AppearanceController::class, 'index'])->name('settings.appearance');
         Route::post('/appearance', [AppearanceController::class, 'update'])->name('settings.appearance.update');
     });
+    Route::post('/activity/track', [ActivityController::class, 'track'])->name('activity.track');
 });
 
 // Admin Routes
