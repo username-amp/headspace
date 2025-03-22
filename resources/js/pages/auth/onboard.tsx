@@ -75,7 +75,7 @@ export default function Onboard() {
                                 <p className="text-muted-foreground text-lg">Let's personalize your experience in a few simple steps</p>
                             </div>
                             <div className="mx-auto max-w-md">
-                                <img src="/images/onboarding/welcome.svg" alt="Welcome" className="w-full" />
+                                <img src="https://www.mindful.org/content/uploads/how-to-meditate.jpg" alt="Welcome" className="w-full" />
                             </div>
                             <Button onClick={() => setStep(2)} className="bg-gradient-to-r from-amber-500 to-yellow-600 px-8 py-6 text-lg text-white">
                                 Let's Begin

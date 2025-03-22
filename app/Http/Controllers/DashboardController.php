@@ -44,8 +44,7 @@ class DashboardController extends Controller
             ->whereNotNull('duration')
             ->where('duration', '>', 0)
             ->whereHasMorph('trackable', [MeditationSession::class])
-            ->distinct('trackable_id', 'created_at')
-            ->count();
+            ->distinct()->count('trackable_id');
 
         // Get today's recommended practice
         $todaysPractice = $this->getTodaysPractice($user);
@@ -56,8 +55,7 @@ class DashboardController extends Controller
             ->whereNotNull('duration')
             ->where('duration', '>', 0)
             ->whereHasMorph('trackable', [MeditationSession::class])
-            ->distinct('trackable_id', 'created_at')
-            ->count();
+            ->distinct()->count('trackable_id');
 
         // Calculate focus hours from completed focus sessions
         $focusHours = UserActivity::where('user_id', $user->id)
