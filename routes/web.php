@@ -9,6 +9,8 @@ use App\Http\Controllers\MeditateController;
 use App\Http\Controllers\MusicController;
 use App\Http\Controllers\Settings\AppearanceController;
 use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\MoodAssessmentController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Middleware\AdminMiddleware;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -36,6 +38,15 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/appearance', [AppearanceController::class, 'update'])->name('settings.appearance.update');
     });
     Route::post('/activity/track', [ActivityController::class, 'track'])->name('activity.track');
+
+    // Mood assessment routes
+    Route::post('/mood-assessments', [MoodAssessmentController::class, 'store'])->name('mood-assessments.store');
+    Route::get('/mood-assessments/session/{sessionId}', [MoodAssessmentController::class, 'getSessionAssessments'])->name('mood-assessments.session');
+    Route::get('/mood-assessments/history', [MoodAssessmentController::class, 'getUserMoodHistory'])->name('mood-assessments.history');
+
+    // Onboarding routes
+    Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding.show');
+    Route::post('/onboarding', [OnboardingController::class, 'save'])->name('onboarding.save');
 });
 
 // Admin Routes

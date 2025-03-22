@@ -2,9 +2,41 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import AppHeaderLayout from '@/layouts/app/app-header-layout';
 import { Head, Link } from '@inertiajs/react';
-import { Activity, Bell, Brain, Clock, Crown, Flame, Flower2, Moon, PlayCircle, Sparkles, Sun, Timer, Trophy } from 'lucide-react';
+import {
+    ArcElement,
+    BarElement,
+    CategoryScale,
+    Chart as ChartJS,
+    Filler,
+    Legend,
+    LinearScale,
+    LineElement,
+    PointElement,
+    Title,
+    Tooltip,
+} from 'chart.js';
+import {
+    Activity,
+    BarChart,
+    Bell,
+    Brain,
+    Clock,
+    Crown,
+    Flame,
+    Flower2,
+    Heart,
+    Moon,
+    PlayCircle,
+    Smile,
+    Sparkles,
+    Sun,
+    Timer,
+    Trophy,
+} from 'lucide-react';
+import { Bar, Doughnut, Line } from 'react-chartjs-2';
 
-// Remove the mockData constant and update the component to use props
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
+
 interface Props {
     stats: {
         currentStreak: {
@@ -42,6 +74,24 @@ interface Props {
                 image: string;
             };
         };
+        moodAnalytics: {
+            trends: {
+                labels: string[];
+                moodRatings: number[];
+            };
+            emotionFrequency: {
+                emotions: Array<{
+                    label: string;
+                    emoji: string;
+                }>;
+                counts: number[];
+            };
+            meditationImpact: {
+                labels: string[];
+                beforeMeditation: number[];
+                afterMeditation: number[];
+            };
+        };
     };
     recentActivities: Array<{
         title: string;
@@ -64,7 +114,6 @@ interface Props {
     }>;
 }
 
-// Add this function before the Dashboard component
 const getIconComponent = (iconName: string) => {
     switch (iconName) {
         case 'Flower2':
@@ -77,6 +126,23 @@ const getIconComponent = (iconName: string) => {
             return <Moon className="h-5 w-5" />;
         default:
             return <Activity className="h-5 w-5" />;
+    }
+};
+
+const getMoodEmoji = (rating: number) => {
+    switch (Math.round(rating)) {
+        case 1:
+            return '😢';
+        case 2:
+            return '😕';
+        case 3:
+            return '😐';
+        case 4:
+            return '🙂';
+        case 5:
+            return '😊';
+        default:
+            return '😐';
     }
 };
 
@@ -301,6 +367,283 @@ export default function Dashboard({ stats, recentActivities, recommendedContent 
                         </div>
                     </CardContent>
                 </Card>
+
+                {/* Mood Analytics Section */}
+                <div className="grid gap-8 lg:grid-cols-3">
+                    {/* Mood Trends */}
+                    <Card className="group col-span-2 overflow-hidden transition-all hover:ring-2 hover:ring-violet-500/30 hover:ring-offset-2">
+                        <CardContent className="p-6">
+                            <div className="mb-6">
+                                <h2 className="flex items-center gap-2 text-xl font-semibold">
+                                    <div className="rounded-lg bg-violet-500/10 p-1.5">
+                                        <BarChart className="h-5 w-5 text-violet-500" />
+                                    </div>
+                                    Mood Trends
+                                </h2>
+                                <p className="text-foreground/60 text-sm">Your emotional journey over time</p>
+                            </div>
+                            <div className="h-[300px]">
+                                <Line
+                                    data={{
+                                        labels: stats.moodAnalytics.trends.labels,
+                                        datasets: [
+                                            {
+                                                label: 'Mood Rating',
+                                                data: stats.moodAnalytics.trends.moodRatings,
+                                                borderColor: 'rgb(139, 92, 246)',
+                                                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                                                fill: true,
+                                                tension: 0.4,
+                                            },
+                                        ],
+                                    }}
+                                    options={{
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                max: 5,
+                                                grid: {
+                                                    color: 'rgba(255, 255, 255, 0.1)',
+                                                },
+                                            },
+                                            x: {
+                                                grid: {
+                                                    display: false,
+                                                },
+                                            },
+                                        },
+                                        plugins: {
+                                            legend: {
+                                                display: false,
+                                            },
+                                        },
+                                    }}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Emotion Frequency */}
+                    <Card className="group overflow-hidden transition-all hover:ring-2 hover:ring-fuchsia-500/30 hover:ring-offset-2">
+                        <CardContent className="p-6">
+                            <div className="mb-6">
+                                <h2 className="flex items-center gap-2 text-xl font-semibold">
+                                    <div className="rounded-lg bg-fuchsia-500/10 p-1.5">
+                                        <Heart className="h-5 w-5 text-fuchsia-500" />
+                                    </div>
+                                    Emotion Frequency
+                                </h2>
+                                <p className="text-foreground/60 text-sm">Most common emotions</p>
+                            </div>
+                            <div className="h-[300px]">
+                                <Doughnut
+                                    data={{
+                                        labels: stats.moodAnalytics.emotionFrequency.emotions.map((emotion) => `${emotion.emoji} ${emotion.label}`),
+                                        datasets: [
+                                            {
+                                                data: stats.moodAnalytics.emotionFrequency.counts,
+                                                backgroundColor: [
+                                                    'rgba(139, 92, 246, 0.8)', // violet
+                                                    'rgba(236, 72, 153, 0.8)', // pink
+                                                    'rgba(234, 179, 8, 0.8)', // yellow
+                                                    'rgba(34, 197, 94, 0.8)', // green
+                                                    'rgba(59, 130, 246, 0.8)', // blue
+                                                    'rgba(168, 85, 247, 0.8)', // purple
+                                                ],
+                                                borderWidth: 0,
+                                            },
+                                        ],
+                                    }}
+                                    options={{
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: {
+                                                position: 'bottom',
+                                                labels: {
+                                                    padding: 20,
+                                                    usePointStyle: true,
+                                                    font: {
+                                                        size: 12,
+                                                    },
+                                                    color: 'rgb(156, 163, 175)', // text-gray-400
+                                                },
+                                            },
+                                        },
+                                        cutout: '65%',
+                                    }}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Mood Rating Visualizations */}
+                    <Card className="group col-span-3 overflow-hidden transition-all hover:ring-2 hover:ring-violet-500/30 hover:ring-offset-2">
+                        <CardContent className="p-6">
+                            <div className="mb-6">
+                                <h2 className="flex items-center gap-2 text-xl font-semibold">
+                                    <div className="rounded-lg bg-violet-500/10 p-1.5">
+                                        <Smile className="h-5 w-5 text-violet-500" />
+                                    </div>
+                                    Mood Rating Visualizations
+                                </h2>
+                                <p className="text-foreground/60 text-sm">Your mood expressed in different ways</p>
+                            </div>
+
+                            <div className="grid gap-8 lg:grid-cols-2">
+                                {/* Percent Mode */}
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-medium">Percent Mode</h3>
+                                    {stats.moodAnalytics.trends.moodRatings.slice(-5).map((rating, index) => {
+                                        const numericRating = Number(rating) || 0;
+                                        const percentage = (numericRating / 5) * 100;
+                                        return (
+                                            <div key={index} className="space-y-2">
+                                                <div className="flex items-center justify-between text-sm">
+                                                    <span className="text-muted-foreground">
+                                                        {stats.moodAnalytics.trends.labels.slice(-5)[index]}
+                                                    </span>
+                                                    <span className="font-medium">{Math.round(percentage)}%</span>
+                                                </div>
+                                                <div className="relative h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                                                    <div
+                                                        className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-500"
+                                                        style={{ width: `${percentage}%` }}
+                                                    >
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Emoji Mode */}
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-medium">Emoji Mode</h3>
+                                    <div className="grid gap-4">
+                                        {stats.moodAnalytics.trends.moodRatings.slice(-5).map((rating, index) => {
+                                            const numericRating = Number(rating) || 0;
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 transition-all hover:border-violet-500/30 hover:bg-white/10"
+                                                >
+                                                    <div className="space-y-1">
+                                                        <p className="text-muted-foreground text-sm">
+                                                            {stats.moodAnalytics.trends.labels.slice(-5)[index]}
+                                                        </p>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-2xl">{getMoodEmoji(numericRating)}</span>
+                                                            <span className="text-sm font-medium">Rating: {numericRating.toFixed(1)}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="text-sm font-medium text-violet-500">
+                                                            {numericRating === 5
+                                                                ? 'Excellent'
+                                                                : numericRating >= 4
+                                                                  ? 'Good'
+                                                                  : numericRating >= 3
+                                                                    ? 'Neutral'
+                                                                    : numericRating >= 2
+                                                                      ? 'Poor'
+                                                                      : 'Very Poor'}
+                                                        </div>
+                                                        <p className="text-muted-foreground text-xs">Mood Level</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Meditation Impact */}
+                    <Card className="group col-span-3 overflow-hidden transition-all hover:ring-2 hover:ring-amber-500/30 hover:ring-offset-2">
+                        <CardContent className="p-6">
+                            <div className="mb-6">
+                                <h2 className="flex items-center gap-2 text-xl font-semibold">
+                                    <div className="rounded-lg bg-amber-500/10 p-1.5">
+                                        <Sparkles className="h-5 w-5 text-amber-500" />
+                                    </div>
+                                    Meditation Impact
+                                </h2>
+                                <p className="text-foreground/60 text-sm">Before vs After Meditation Mood Comparison</p>
+                            </div>
+                            <div className="h-[300px]">
+                                <Bar
+                                    data={{
+                                        labels: stats.moodAnalytics.meditationImpact.labels,
+                                        datasets: [
+                                            {
+                                                label: 'Before Meditation',
+                                                data: stats.moodAnalytics.meditationImpact.beforeMeditation,
+                                                backgroundColor: 'rgba(139, 92, 246, 0.6)',
+                                                borderRadius: 4,
+                                            },
+                                            {
+                                                label: 'After Meditation',
+                                                data: stats.moodAnalytics.meditationImpact.afterMeditation,
+                                                backgroundColor: 'rgba(234, 179, 8, 0.6)',
+                                                borderRadius: 4,
+                                            },
+                                        ],
+                                    }}
+                                    options={{
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                max: 5,
+                                                grid: {
+                                                    color: 'rgba(255, 255, 255, 0.1)',
+                                                },
+                                                ticks: {
+                                                    callback: function (value) {
+                                                        return getMoodEmoji(Number(value));
+                                                    },
+                                                    font: {
+                                                        size: 16,
+                                                    },
+                                                },
+                                            },
+                                            x: {
+                                                grid: {
+                                                    display: false,
+                                                },
+                                            },
+                                        },
+                                        plugins: {
+                                            tooltip: {
+                                                callbacks: {
+                                                    label: function (context) {
+                                                        const label = context.dataset.label || '';
+                                                        const value = context.parsed.y;
+                                                        return `${label}: ${getMoodEmoji(value)} (${value})`;
+                                                    },
+                                                },
+                                            },
+                                            legend: {
+                                                position: 'top',
+                                                align: 'end',
+                                                labels: {
+                                                    usePointStyle: true,
+                                                    padding: 20,
+                                                },
+                                            },
+                                        },
+                                    }}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
 
                 {/* Recommended Sessions */}
                 <div>

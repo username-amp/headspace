@@ -9,31 +9,15 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $user = Auth::user();
+        $user = $request->user();
         
-        // Get user stats
-        $stats = $this->getUserStats($user);
-        
-        // Get recent activities
-        $recentActivities = $this->getRecentActivities($user);
-        
-        // Get recommended content
-        $recommendedContent = $this->getRecommendedContent($user);
-
-        return Inertia::render('dashboard', [
-            'stats' => $stats,
-            'recentActivities' => $recentActivities,
-            'recommendedContent' => $recommendedContent,
-        ]);
-    }
-
-    private function getUserStats($user)
-    {
         // Force refresh user relationship to prevent stale data
         $user->refresh();
         
@@ -54,27 +38,30 @@ class DashboardController extends Controller
             })
             ->sum('duration') / 60;
 
-        // Get total sessions counting completed sessions
+        // Get total sessions by counting unique completed meditation sessions
         $totalSessions = UserActivity::where('user_id', $user->id)
-            ->where('action', 'pause')
+            ->where('action', 'complete')
             ->whereNotNull('duration')
             ->where('duration', '>', 0)
+            ->whereHasMorph('trackable', [MeditationSession::class])
+            ->distinct('trackable_id', 'created_at')
             ->count();
 
         // Get today's recommended practice
         $todaysPractice = $this->getTodaysPractice($user);
 
-        // Calculate achievements based on fresh data
+        // Calculate achievements based on completed sessions
         $meditationSessions = UserActivity::where('user_id', $user->id)
-            ->where('action', 'pause')
+            ->where('action', 'complete')
             ->whereNotNull('duration')
             ->where('duration', '>', 0)
             ->whereHasMorph('trackable', [MeditationSession::class])
-            ->distinct('trackable_id')
+            ->distinct('trackable_id', 'created_at')
             ->count();
 
+        // Calculate focus hours from completed focus sessions
         $focusHours = UserActivity::where('user_id', $user->id)
-            ->where('action', 'pause')
+            ->where('action', 'complete')
             ->whereNotNull('duration')
             ->where('duration', '>', 0)
             ->whereHasMorph('trackable', [FocusSession::class])
@@ -113,22 +100,27 @@ class DashboardController extends Controller
                 : 'Complete sessions to unlock achievements'
         ];
 
-        return [
-            'currentStreak' => [
-                'days' => $streak,
-                'message' => 'Keep up the great work!',
+        return Inertia::render('dashboard', [
+            'stats' => [
+                'currentStreak' => [
+                    'days' => $streak,
+                    'message' => 'Keep up the great work!',
+                ],
+                'totalMinutes' => [
+                    'minutes' => (int) $totalMinutes,
+                    'message' => floor($totalMinutes / 60) . ' hours of mindfulness',
+                ],
+                'totalSessions' => [
+                    'count' => $totalSessions,
+                    'message' => 'Sessions completed',
+                ],
+                'achievements' => $achievements,
+                'todaysPractice' => $todaysPractice,
+                'moodAnalytics' => $this->getMoodAnalytics($user),
             ],
-            'totalMinutes' => [
-                'minutes' => (int) $totalMinutes,
-                'message' => floor($totalMinutes / 60) . ' hours of mindfulness',
-            ],
-            'totalSessions' => [
-                'count' => $totalSessions,
-                'message' => 'Sessions completed',
-            ],
-            'achievements' => $achievements,
-            'todaysPractice' => $todaysPractice,
-        ];
+            'recentActivities' => $this->getRecentActivities($user),
+            'recommendedContent' => $this->getRecommendedContent($user),
+        ]);
     }
 
     private function calculateStreak($user)
@@ -161,14 +153,9 @@ class DashboardController extends Controller
             $query->withoutTrashed();
         }])
             ->where('user_id', $user->id)
-            ->where(function ($query) {
-                $query->where('action', 'play')
-                    ->orWhere(function ($q) {
-                        $q->where('action', 'pause')
-                            ->whereNotNull('duration')
-                            ->where('duration', '>', 0);
-                    });
-            })
+            ->where('action', 'complete')
+            ->whereNotNull('duration')
+            ->where('duration', '>', 0)
             ->orderBy('created_at', 'desc')
             ->take(3)
             ->get()
@@ -179,22 +166,13 @@ class DashboardController extends Controller
                 // Use the trackable_type directly for type determination
                 $type = $activity->trackable_type === 'meditation' ? 'Meditation' : 'Focus';
                 
-                // Ensure duration is numeric and handle null/invalid values
-                $duration = 0;
-                if ($activity->action === 'play') {
-                    // For play actions, use content duration if activity duration is not valid
-                    $duration = is_numeric($activity->duration) && $activity->duration > 0 
-                        ? (int)$activity->duration 
-                        : (is_numeric($content->duration) ? (int)$content->duration * 60 : 0);
-                } else {
-                    // For pause actions, use activity duration if valid
-                    $duration = is_numeric($activity->duration) ? (int)$activity->duration : 0;
-                }
+                // Get duration in minutes
+                $duration = ceil($activity->duration / 60);
                 
                 return [
                     'title' => $content->title ?? 'Untitled Session',
                     'type' => $type,
-                    'duration' => floor($duration / 60) . ' min',
+                    'duration' => $duration . ' min',
                     'timestamp' => $activity->created_at->diffForHumans(),
                     'icon' => $this->getIconForType($type),
                     'color' => $this->getColorForType($type),
@@ -324,5 +302,99 @@ class DashboardController extends Controller
     private function getColorForType($type)
     {
         return $type === 'Meditation' ? 'text-violet-500' : 'text-indigo-500';
+    }
+
+    private function getMoodAnalytics($user)
+    {
+        // Get mood trends for the last 7 days
+        $moodTrends = DB::table('mood_assessments')
+            ->where('user_id', $user->id)
+            ->whereNotNull('mood_rating')
+            ->select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('AVG(mood_rating) as avg_rating')
+            )
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->orderBy(DB::raw('DATE(created_at)'), 'asc')
+            ->get();
+
+        Log::info('Mood Trends:', ['data' => $moodTrends]);
+
+        // Get meditation impact (before vs after) - Fixed query to use MySQL CAST
+        $meditationImpact = DB::table('mood_assessments as pre')
+            ->join('mood_assessments as post', function ($join) {
+                $join->on('pre.meditation_session_id', '=', 'post.meditation_session_id')
+                    ->where('pre.assessment_type', '=', 'pre')
+                    ->where('post.assessment_type', '=', 'post')
+                    ->whereRaw('pre.created_at < post.created_at');
+            })
+            ->where('pre.user_id', $user->id)
+            ->whereNotNull('pre.mood_rating')
+            ->whereNotNull('post.mood_rating')
+            ->select(
+                DB::raw('DATE(pre.created_at) as date'),
+                DB::raw('CAST(pre.mood_rating AS SIGNED) as pre_rating'),
+                DB::raw('CAST(post.mood_rating AS SIGNED) as post_rating')
+            )
+            ->orderBy('pre.created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        Log::info('Meditation Impact:', ['data' => $meditationImpact]);
+
+        // Get mood distribution
+        $moodDistribution = DB::table('mood_assessments')
+            ->where('user_id', $user->id)
+            ->whereNotNull('mood_rating')
+            ->select('mood_rating', DB::raw('COUNT(*) as count'))
+            ->groupBy('mood_rating')
+            ->orderBy('mood_rating', 'asc')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->mood_rating => $item->count];
+            });
+
+        Log::info('Mood Distribution:', ['data' => $moodDistribution]);
+
+        // Map mood ratings to emojis
+        $moodEmojis = [
+            1 => ['emoji' => '😢', 'label' => 'Very Low'],
+            2 => ['emoji' => '😕', 'label' => 'Low'],
+            3 => ['emoji' => '😐', 'label' => 'Neutral'],
+            4 => ['emoji' => '🙂', 'label' => 'Good'],
+            5 => ['emoji' => '😊', 'label' => 'Excellent'],
+        ];
+
+        return [
+            'trends' => [
+                'labels' => $moodTrends->pluck('date')->map(function ($date) {
+                    return Carbon::parse($date)->format('M d');
+                })->toArray(),
+                'moodRatings' => $moodTrends->pluck('avg_rating')->toArray(),
+            ],
+            'emotionFrequency' => [
+                'emotions' => collect($moodEmojis)->map(function ($mood, $rating) use ($moodDistribution) {
+                    return [
+                        'label' => $mood['label'],
+                        'emoji' => $mood['emoji'],
+                        'count' => $moodDistribution[$rating] ?? 0,
+                    ];
+                })->values()->toArray(),
+                'counts' => collect($moodEmojis)->map(function ($mood, $rating) use ($moodDistribution) {
+                    return $moodDistribution[$rating] ?? 0;
+                })->values()->toArray(),
+            ],
+            'meditationImpact' => [
+                'labels' => $meditationImpact->pluck('date')->map(function ($date) {
+                    return Carbon::parse($date)->format('M d');
+                })->toArray(),
+                'beforeMeditation' => $meditationImpact->pluck('pre_rating')->map(function ($rating) {
+                    return (int) $rating;
+                })->toArray(),
+                'afterMeditation' => $meditationImpact->pluck('post_rating')->map(function ($rating) {
+                    return (int) $rating;
+                })->toArray(),
+            ],
+        ];
     }
 }

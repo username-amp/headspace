@@ -63,10 +63,26 @@ class CreateMeditationAppTables extends Migration
             $table->boolean('notifications_enabled')->default(true);
             $table->timestamps();
         });
+
+        // Create mood assessments table for tracking user moods
+        Schema::create('mood_assessments', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('meditation_session_id')->nullable()->constrained()->onDelete('set null');
+            $table->enum('assessment_type', ['pre', 'post']);
+            $table->json('emotions')->nullable(); // For storing multiple emotions
+            $table->integer('mood_rating')->nullable();
+            $table->json('physical_symptoms')->nullable();
+            $table->string('mood_shift')->nullable(); // improved, same, worsened
+            $table->string('emotional_state')->nullable();
+            $table->text('reflections')->nullable();
+            $table->timestamps();
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('mood_assessments');
         Schema::dropIfExists('user_preferences');
         Schema::dropIfExists('user_meditations');
         Schema::dropIfExists('focus_sessions');

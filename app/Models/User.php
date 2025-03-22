@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\UserMeditation;
+use App\Models\ActivityLog;
+use App\Models\UserProgress;
 
 class User extends Authenticatable
 {
@@ -25,6 +28,11 @@ class User extends Authenticatable
         'password',
         'role',
         'appearance',
+        'preferred_time',
+        'daily_goal_minutes',
+        'notifications_enabled',
+        'interests',
+        'onboarding_completed',
     ];
 
     /**
@@ -47,6 +55,9 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'notifications_enabled' => 'boolean',
+            'interests' => 'array',
+            'onboarding_completed' => 'boolean',
         ];
     }
 

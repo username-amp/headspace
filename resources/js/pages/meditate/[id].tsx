@@ -1,9 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import Modal from '@/components/ui/modal';
 import { Slider } from '@/components/ui/slider';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { ArrowLeft, Clock, Flower2, Forward, Heart, Pause, Play, Rewind, Tag, Volume2, VolumeX } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -24,6 +25,17 @@ interface Props {
     relatedMeditations: MeditationSession[];
 }
 
+// Add these interfaces for the new features
+interface PreMeditationAssessment {
+    moodRating: number;
+    physicalSymptoms: string[];
+}
+
+interface PostMeditationAssessment {
+    moodRating: number;
+    reflections: string;
+}
+
 export default function MeditateDetails({ meditation, relatedMeditations }: Props) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -34,19 +46,41 @@ export default function MeditateDetails({ meditation, relatedMeditations }: Prop
     const [duration, setDuration] = useState(0);
     const [isLiked, setIsLiked] = useState(false);
     const [showControls, setShowControls] = useState(false);
+    const [showPreModal, setShowPreModal] = useState(true);
+    const [showPostModal, setShowPostModal] = useState(false);
+
+    // State for pre-meditation assessment
+    const [preAssessment, setPreAssessment] = useState<PreMeditationAssessment>({
+        moodRating: 3,
+        physicalSymptoms: [],
+    });
+
+    // State for post-meditation assessment
+    const [postAssessment, setPostAssessment] = useState<PostMeditationAssessment>({
+        moodRating: 3,
+        reflections: '',
+    });
 
     // Add activity tracking
     const trackActivity = useCallback(
         async (action: string, duration?: number) => {
+            const payload = {
+                trackable_type: 'App\\Models\\MeditationSession',
+                trackable_id: meditation.id,
+                action,
+                // Always include duration for pause action, default to 0 if not provided
+                ...(action === 'pause' ? { duration: duration || 0 } : duration ? { duration } : {}),
+            };
+            console.log('Activity Tracking Payload:', payload);
+            console.log('Activity Tracking URL:', route('activity.track'));
             try {
-                await axios.post(route('activity.track'), {
-                    trackable_type: 'App\\Models\\MeditationSession',
-                    trackable_id: meditation.id,
-                    action,
-                    duration,
-                });
-            } catch (error) {
-                console.error('Failed to track activity:', error);
+                const response = await axios.post(route('activity.track'), payload);
+                console.log('Activity Tracking Response:', response.data);
+            } catch (error: unknown) {
+                if (error instanceof AxiosError) {
+                    console.error('Failed to track activity:', error);
+                    console.error('Error response:', error.response?.data);
+                }
             }
         },
         [meditation.id],
@@ -144,6 +178,77 @@ export default function MeditateDetails({ meditation, relatedMeditations }: Prop
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
+    // Handle changes for pre-meditation assessment
+    const handlePreAssessmentChange = (field: keyof PreMeditationAssessment, value: string[] | number) => {
+        setPreAssessment((prev) => ({ ...prev, [field]: value }));
+    };
+
+    // Handle changes for post-meditation assessment
+    const handlePostAssessmentChange = (field: keyof PostMeditationAssessment, value: string | number) => {
+        setPostAssessment((prev) => ({ ...prev, [field]: value }));
+    };
+
+    const handlePreAssessmentSubmit = () => {
+        // Save pre-meditation assessment
+        axios
+            .post(route('mood-assessments.store'), {
+                meditation_session_id: meditation.id,
+                assessment_type: 'pre',
+                mood_rating: preAssessment.moodRating,
+                physical_symptoms: preAssessment.physicalSymptoms,
+            })
+            .then(() => {
+                setShowPreModal(false);
+                if (videoRef.current) {
+                    videoRef.current.play();
+                    setIsPlaying(true);
+                }
+            })
+            .catch((error) => {
+                console.error('Failed to save pre-assessment:', error);
+                setShowPreModal(false);
+                if (videoRef.current) {
+                    videoRef.current.play();
+                    setIsPlaying(true);
+                }
+            });
+    };
+
+    const handlePostAssessmentSubmit = () => {
+        // Save post-meditation assessment
+        axios
+            .post(route('mood-assessments.store'), {
+                meditation_session_id: meditation.id,
+                assessment_type: 'post',
+                mood_rating: postAssessment.moodRating,
+                reflections: postAssessment.reflections,
+            })
+            .then(() => {
+                setShowPostModal(false);
+            })
+            .catch((error) => {
+                console.error('Failed to save post-assessment:', error);
+                setShowPostModal(false);
+            });
+    };
+
+    const handleVideoEnd = useCallback(() => {
+        if (videoRef.current && Math.abs(videoRef.current.currentTime - videoRef.current.duration) < 1) {
+            setIsPlaying(false);
+            // Track completion when video ends
+            trackActivity('complete', Math.floor(videoRef.current.duration));
+            setShowPostModal(true);
+        }
+    }, [trackActivity]);
+
+    useEffect(() => {
+        const video = videoRef.current;
+        if (video) {
+            video.addEventListener('ended', handleVideoEnd);
+            return () => video.removeEventListener('ended', handleVideoEnd);
+        }
+    }, [handleVideoEnd]);
+
     return (
         <AppLayout>
             <Head title={meditation.title} />
@@ -165,6 +270,84 @@ export default function MeditateDetails({ meditation, relatedMeditations }: Prop
                         </Button>
                     </div>
 
+                    {/* Pre-Meditation Modal */}
+                    {showPreModal && (
+                        <Modal isOpen={showPreModal} onClose={() => setShowPreModal(false)}>
+                            <h2>How are you feeling?</h2>
+                            <div className="modal-content space-y-6">
+                                {/* Mood Rating */}
+                                <div>
+                                    <label>Rate your current mood</label>
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between text-sm text-white/60">
+                                            <span>Low</span>
+                                            <span>High</span>
+                                        </div>
+                                        <div className="flex items-center justify-center gap-4">
+                                            {[1, 2, 3, 4, 5].map((rating) => (
+                                                <button
+                                                    key={rating}
+                                                    onClick={() => handlePreAssessmentChange('moodRating', rating)}
+                                                    className={`relative rounded-full p-3 transition-all hover:scale-110 ${
+                                                        preAssessment.moodRating === rating
+                                                            ? 'scale-110 bg-amber-500/20 text-amber-500 ring-2 ring-amber-500'
+                                                            : 'text-gray-400 hover:text-gray-300'
+                                                    }`}
+                                                >
+                                                    <div className="relative">
+                                                        {rating === 1 && '😢'}
+                                                        {rating === 2 && '😕'}
+                                                        {rating === 3 && '😐'}
+                                                        {rating === 4 && '🙂'}
+                                                        {rating === 5 && '😊'}
+                                                        <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs font-medium text-white/60">
+                                                            {rating * 20}%
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Physical Symptoms */}
+                                <div>
+                                    <label>Any physical sensations?</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {['Tension', 'Fatigue', 'Pain', 'Restlessness', 'Comfort', 'Lightness'].map((symptom) => (
+                                            <button
+                                                key={symptom.toLowerCase()}
+                                                type="button"
+                                                onClick={() =>
+                                                    handlePreAssessmentChange(
+                                                        'physicalSymptoms',
+                                                        preAssessment.physicalSymptoms.includes(symptom.toLowerCase())
+                                                            ? preAssessment.physicalSymptoms.filter((s) => s !== symptom.toLowerCase())
+                                                            : [...preAssessment.physicalSymptoms, symptom.toLowerCase()],
+                                                    )
+                                                }
+                                                className={`relative overflow-hidden rounded-xl border p-2.5 text-sm font-medium transition-all duration-200 ${
+                                                    preAssessment.physicalSymptoms.includes(symptom.toLowerCase())
+                                                        ? 'border-amber-500 bg-amber-500/10 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.3)] ring-2 ring-amber-500'
+                                                        : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10 hover:ring-1 hover:ring-amber-500/50'
+                                                }`}
+                                            >
+                                                {preAssessment.physicalSymptoms.includes(symptom.toLowerCase()) && (
+                                                    <div className="animate-gradient absolute inset-0 bg-gradient-to-r from-amber-500/20 via-amber-400/20 to-amber-500/20" />
+                                                )}
+                                                <span className="relative">{symptom}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <button onClick={handlePreAssessmentSubmit} className="mt-6 flex w-full items-center justify-center gap-2">
+                                    Begin Meditation
+                                </button>
+                            </div>
+                        </Modal>
+                    )}
+
                     <div className="grid gap-8 lg:grid-cols-3">
                         {/* Main Content */}
                         <div className="space-y-6 lg:col-span-2">
@@ -182,13 +365,7 @@ export default function MeditateDetails({ meditation, relatedMeditations }: Prop
                                         className="h-full w-full object-contain"
                                         onTimeUpdate={handleTimeUpdate}
                                         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-                                        onEnded={() => {
-                                            setIsPlaying(false);
-                                            // Track completion with final duration
-                                            if (videoRef.current) {
-                                                trackActivity('pause', Math.floor(videoRef.current.duration));
-                                            }
-                                        }}
+                                        onEnded={handleVideoEnd}
                                     />
                                 ) : (
                                     <div className="relative h-full w-full">
@@ -344,6 +521,65 @@ export default function MeditateDetails({ meditation, relatedMeditations }: Prop
                         </div>
                     </div>
                 </div>
+
+                {/* Post-Meditation Modal */}
+                {showPostModal && (
+                    <Modal isOpen={showPostModal} onClose={() => setShowPostModal(false)}>
+                        <h2>How do you feel now?</h2>
+                        <div className="modal-content space-y-6">
+                            {/* Mood Rating */}
+                            <div>
+                                <label>Rate your mood after meditation</label>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between text-sm text-white/60">
+                                        <span>Low</span>
+                                        <span>High</span>
+                                    </div>
+                                    <div className="flex items-center justify-center gap-4">
+                                        {[1, 2, 3, 4, 5].map((rating) => (
+                                            <button
+                                                key={rating}
+                                                onClick={() => handlePostAssessmentChange('moodRating', rating)}
+                                                className={`relative rounded-full p-3 transition-all hover:scale-110 ${
+                                                    postAssessment.moodRating === rating
+                                                        ? 'scale-110 bg-amber-500/20 text-amber-500 ring-2 ring-amber-500'
+                                                        : 'text-gray-400 hover:text-gray-300'
+                                                }`}
+                                            >
+                                                <div className="relative">
+                                                    {rating === 1 && '😢'}
+                                                    {rating === 2 && '😕'}
+                                                    {rating === 3 && '😐'}
+                                                    {rating === 4 && '🙂'}
+                                                    {rating === 5 && '😊'}
+                                                    <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs font-medium text-white/60">
+                                                        {rating * 20}%
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Reflections */}
+                            <div>
+                                <label>Share your thoughts about this session</label>
+                                <textarea
+                                    value={postAssessment.reflections}
+                                    onChange={(e) => handlePostAssessmentChange('reflections', e.target.value)}
+                                    placeholder="How was your meditation experience? Any notable moments or realizations?"
+                                    rows={4}
+                                    className="resize-none"
+                                />
+                            </div>
+
+                            <button onClick={handlePostAssessmentSubmit} className="mt-6 flex w-full items-center justify-center gap-2">
+                                Complete Session
+                            </button>
+                        </div>
+                    </Modal>
+                )}
             </div>
         </AppLayout>
     );
